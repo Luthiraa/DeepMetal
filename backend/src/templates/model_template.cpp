@@ -1,16 +1,21 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <algorithm>
 
 class MNISTModel {
 private:
-    // Layer 1 weights and bias
+    // Layer 1: Input (784) -> Hidden1 (128)
     std::vector<std::vector<float>> layer1_weights = {{LAYER1_WEIGHTS}};
     std::vector<float> layer1_bias = {{LAYER1_BIAS}};
     
-    // Layer 2 weights and bias
+    // Layer 2: Hidden1 (128) -> Hidden2 (64)
     std::vector<std::vector<float>> layer2_weights = {{LAYER2_WEIGHTS}};
     std::vector<float> layer2_bias = {{LAYER2_BIAS}};
+    
+    // Layer 3: Hidden2 (64) -> Output (10)
+    std::vector<std::vector<float>> layer3_weights = {{LAYER3_WEIGHTS}};
+    std::vector<float> layer3_bias = {{LAYER3_BIAS}};
     
     // ReLU activation function
     float relu(float x) {
@@ -37,26 +42,36 @@ private:
 
 public:
     std::vector<float> predict(const std::vector<float>& input) {
-        // Layer 1: Linear transformation + ReLU
-        std::vector<float> layer1_output(layer1_bias.size());
-        for (size_t i = 0; i < layer1_bias.size(); ++i) {
-            layer1_output[i] = layer1_bias[i];
-            for (size_t j = 0; j < input.size(); ++j) {
-                layer1_output[i] += input[j] * layer1_weights[i][j];
+        // Layer 1: Input -> Hidden1 (784 -> 128)
+        std::vector<float> hidden1(128);
+        for (int i = 0; i < 128; ++i) {
+            hidden1[i] = layer1_bias[i];
+            for (int j = 0; j < 784; ++j) {
+                hidden1[i] += input[j] * layer1_weights[i][j];
             }
-            layer1_output[i] = relu(layer1_output[i]);
+            hidden1[i] = relu(hidden1[i]);
         }
         
-        // Layer 2: Linear transformation + Softmax
-        std::vector<float> layer2_output(layer2_bias.size());
-        for (size_t i = 0; i < layer2_bias.size(); ++i) {
-            layer2_output[i] = layer2_bias[i];
-            for (size_t j = 0; j < layer1_output.size(); ++j) {
-                layer2_output[i] += layer1_output[j] * layer2_weights[i][j];
+        // Layer 2: Hidden1 -> Hidden2 (128 -> 64)
+        std::vector<float> hidden2(64);
+        for (int i = 0; i < 64; ++i) {
+            hidden2[i] = layer2_bias[i];
+            for (int j = 0; j < 128; ++j) {
+                hidden2[i] += hidden1[j] * layer2_weights[i][j];
+            }
+            hidden2[i] = relu(hidden2[i]);
+        }
+        
+        // Layer 3: Hidden2 -> Output (64 -> 10)
+        std::vector<float> output(10);
+        for (int i = 0; i < 10; ++i) {
+            output[i] = layer3_bias[i];
+            for (int j = 0; j < 64; ++j) {
+                output[i] += hidden2[j] * layer3_weights[i][j];
             }
         }
         
-        return softmax(layer2_output);
+        return softmax(output);
     }
     
     int predict_class(const std::vector<float>& input) {
@@ -65,17 +80,12 @@ public:
     }
 };
 
-// Example usage
 int main() {
     MNISTModel model;
-    
-    // Example input (28x28 = 784 features, normalized to [0,1])
     std::vector<float> example_input(784, 0.0f);
-    // Fill with actual pixel values...
-    
     std::vector<float> probabilities = model.predict(example_input);
     int predicted_class = model.predict_class(example_input);
-    
+
     std::cout << "Predicted class: " << predicted_class << std::endl;
     std::cout << "Probabilities: ";
     for (size_t i = 0; i < probabilities.size(); ++i) {

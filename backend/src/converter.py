@@ -34,23 +34,26 @@ def convert_model(pytorch_model_path):
 
     # Find the correct layer names (adapt based on actual keys)
     layer_keys = list(weights.keys())
-    
-    # Try to identify layer weights and biases
-    if len(layer_keys) >= 4:
-        # Assume first 4 parameters are layer1_weight, layer1_bias, layer2_weight, layer2_bias
-        layer1_weight_key = layer_keys[0]
-        layer1_bias_key = layer_keys[1] 
-        layer2_weight_key = layer_keys[2]
-        layer2_bias_key = layer_keys[3]
+      # Try to identify layer weights and biases
+    if len(layer_keys) >= 6:  # 3 layers with weights and biases each
+        # Map the keys to their respective layers
+        layer1_weight_key = 'hidden_0.weight'
+        layer1_bias_key = 'hidden_0.bias'
+        layer2_weight_key = 'hidden_1.weight'
+        layer2_bias_key = 'hidden_1.bias'
+        layer3_weight_key = 'output.weight'
+        layer3_bias_key = 'output.bias'
         
-        print(f"Using keys: {layer1_weight_key}, {layer1_bias_key}, {layer2_weight_key}, {layer2_bias_key}")
+        print(f"Using keys: {layer1_weight_key}, {layer1_bias_key}, {layer2_weight_key}, {layer2_bias_key}, {layer3_weight_key}, {layer3_bias_key}")
         
         template = template.replace('{{LAYER1_WEIGHTS}}', format_array(weights[layer1_weight_key].T))
         template = template.replace('{{LAYER1_BIAS}}', format_array(weights[layer1_bias_key]))
         template = template.replace('{{LAYER2_WEIGHTS}}', format_array(weights[layer2_weight_key].T))
         template = template.replace('{{LAYER2_BIAS}}', format_array(weights[layer2_bias_key]))
+        template = template.replace('{{LAYER3_WEIGHTS}}', format_array(weights[layer3_weight_key].T))
+        template = template.replace('{{LAYER3_BIAS}}', format_array(weights[layer3_bias_key]))
     else:
-        print("Error: Expected at least 4 parameters (2 layers with weights and biases)")
+        print("Error: Expected 6 parameters (3 layers with weights and biases each)")
         return
 
     with open(OUTPUT_PATH, 'w') as f:
