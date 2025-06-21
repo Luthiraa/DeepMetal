@@ -1,19 +1,3 @@
-#!/bin/bash
-# deploy_nn.sh - Safe debug deploy for STM32F446RE neural network test
-
-echo "🔧 Debugging Neural Network Program"
-echo "=================================="
-
-cd stm32_project || { echo "❌ Could not enter stm32_project"; exit 1; }
-
-# Ensure st-flash is installed
-if ! command -v st-flash &> /dev/null; then
-  echo "📦 st-flash not found. Installing..."
-  sudo apt update && sudo apt install -y stlink-tools
-fi
-
-# Write debug_neural.c with FPU enable + stepwise UART/LED logging
-cat > debug_neural.c << 'ENDFILE'
 #include "../output/model.h"
 
 // --- enable FPU on Cortex-M4 ---------------------------------
@@ -129,37 +113,3 @@ void Reset_Handler(void) {
         led_blink(1);
     }
 }
-ENDFILE
-
-echo "📋 Debug neural network program created"
-
-echo "🔨 Compiling debug version..."
-arm-none-eabi-gcc \
-  -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard \
-  -Os -Wall -nostdlib -nostartfiles \
-  -T complete.ld \
-  -Wl,--gc-sections \
-  debug_neural.c ../output/model.c \
-  -o debug_neural.elf
-
-if [ $? -ne 0 ]; then
-  echo "❌ Compilation failed!"
-  exit 1
-fi
-
-arm-none-eabi-objcopy -O binary debug_neural.elf debug_neural.bin
-echo ""
-echo "📊 Binary size:"
-ls -lh debug_neural.bin
-
-echo ""
-echo "📱 Flashing debug neural network..."
-st-flash write debug_neural.bin 0x08000000
-if [ $? -ne 0 ]; then
-  echo "❌ Flash failed!"
-  exit 1
-fi
-
-echo ""
-echo "🔧 DEBUG NEURAL NETWORK DEPLOYED!"
-echo "📺 Connect with: picocom -b 38400 /dev/ttyACM0"

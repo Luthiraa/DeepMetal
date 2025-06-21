@@ -10,7 +10,7 @@ class DynamicPyToCConverter:
         self.model_path = model_path
         self.output_dir = output_dir
         self.layer_configs = []  # stores layer configuration dictionaries
-        self.max_buffer_size = 8192  # maximum buffer size for intermediate results
+        self.max_buffer_size = 2048  # maximum buffer size for intermediate results
         os.makedirs(self.output_dir, exist_ok=True)
 
     def parse_model_architecture(self):
