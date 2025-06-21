@@ -7,14 +7,9 @@ echo
 
 # step 1: check if model exists, create if needed
 MODEL_PATH="models/mnist_linear_model.pth"
-if [ ! -f "$MODEL_PATH" ]; then
-    echo "📦 creating pytorch model (no training for speed)..."
-    python export_model.py --model-type linear --no-train
-    echo
-else
-    echo "✅ model already exists: $MODEL_PATH"
-    echo
-fi
+echo "📦 creating fresh pytorch model with training..."
+python export_model.py --model-type linear --epochs 2 --model-size small
+echo
 
 # step 2: convert to c
 echo "📝 converting to c code..."

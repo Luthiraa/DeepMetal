@@ -12,145 +12,79 @@ import os
 import argparse
 from torch.utils.data import DataLoader
 
-class MNISTLinearModel(nn.Module):
-    """simple fully connected model for mnist classification"""
-    def __init__(self, input_size=784, hidden_sizes=[128, 64], num_classes=10):
-        super(MNISTLinearModel, self).__init__()
-        
+def get_model_sizes(model_type, size):
+    """returns model architecture parameters based on type and size"""
+    sizes = {
+        'linear': {
+            'tiny': [64, 32],           # ~52K params
+            'small': [128, 64],         # ~109K params  
+            'medium': [256, 128],       # ~237K params
+            'large': [512, 256],        # ~670K params
+        },
+        'conv': {
+            'tiny': {'ch1': 8, 'ch2': 16, 'ch3': 16, 'fc': 64},      # ~25K params
+            'small': {'ch1': 16, 'ch2': 32, 'ch3': 32, 'fc': 128},   # ~180K params
+            'medium': {'ch1': 32, 'ch2': 64, 'ch3': 64, 'fc': 256},  # ~650K params
+            'large': {'ch1': 64, 'ch2': 128, 'ch3': 128, 'fc': 512}, # ~2.5M params
+        },
+        'hybrid': {
+            'tiny': {'ch1': 4, 'ch2': 8, 'fc1': 64, 'fc2': 16},     # ~25K params
+            'small': {'ch1': 8, 'ch2': 16, 'fc1': 128, 'fc2': 32},  # ~407K params
+            'medium': {'ch1': 16, 'ch2': 32, 'fc1': 256, 'fc2': 64}, # ~1.6M params  
+            'large': {'ch1': 32, 'ch2': 64, 'fc1': 512, 'fc2': 128}, # ~6.4M params
+        }
+    }
+    return sizes[model_type][size]
+
+def create_sequential_model(model_type='linear', model_size='small'):
+    """creates nn.Sequential model for better converter compatibility"""
+    
+    if model_type == 'linear':
+        hidden_sizes = get_model_sizes('linear', model_size)
         layers = []
-        prev_size = input_size
+        prev_size = 784
         
-        # build hidden layers
         for hidden_size in hidden_sizes:
             layers.append(nn.Linear(prev_size, hidden_size))
             layers.append(nn.ReLU())
             prev_size = hidden_size
         
-        # output layer (no activation - will be handled in softmax)
-        layers.append(nn.Linear(prev_size, num_classes))
-        
-        self.network = nn.Sequential(*layers)
+        layers.append(nn.Linear(prev_size, 10))  # output layer
+        return nn.Sequential(*layers)
     
-    def forward(self, x):
-        # flatten input for linear layers
-        x = x.view(x.size(0), -1)
-        return self.network(x)
-
-class MNISTConvModel(nn.Module):
-    """convolutional model for mnist classification"""
-    def __init__(self, num_classes=10):
-        super(MNISTConvModel, self).__init__()
-        
-        self.features = nn.Sequential(
-            # first conv block: 1x28x28 -> 16x26x26
-            nn.Conv2d(1, 16, kernel_size=3, stride=1, padding=0),
-            nn.ReLU(),
-            
-            # second conv block: 16x26x26 -> 32x24x24  
-            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=0),
-            nn.ReLU(),
-            
-            # third conv block: 32x24x24 -> 32x12x12
-            nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
-            nn.ReLU()
-        )
-        
-        # calculate flattened size after conv layers
-        # input: 1x28x28
-        # after conv1: 16x26x26 (28-3+1=26)
-        # after conv2: 32x24x24 (26-3+1=24)  
-        # after conv3: 32x12x12 ((24+2-3)/2+1=12)
-        conv_output_size = 32 * 12 * 12
-        
-        self.classifier = nn.Sequential(
-            nn.Linear(conv_output_size, 128),
-            nn.ReLU(),
-            nn.Linear(128, 64),
-            nn.ReLU(),
-            nn.Linear(64, num_classes)
-        )
-    
-    def forward(self, x):
-        x = self.features(x)
-        x = x.view(x.size(0), -1)  # flatten
-        x = self.classifier(x)
-        return x
-
-class MNISTHybridModel(nn.Module):
-    """hybrid model with both conv and linear layers"""
-    def __init__(self, num_classes=10):
-        super(MNISTHybridModel, self).__init__()
-        
-        # define layers individually for better converter compatibility
-        self.conv1 = nn.Conv2d(1, 8, kernel_size=3, stride=1, padding=1)  # 1x28x28 -> 8x28x28
-        self.relu1 = nn.ReLU()
-        
-        self.conv2 = nn.Conv2d(8, 16, kernel_size=3, stride=2, padding=1)  # 8x28x28 -> 16x14x14
-        self.relu2 = nn.ReLU()
-        
-        # flattened size: 16 * 14 * 14 = 3136
-        self.linear1 = nn.Linear(16 * 14 * 14, 128)
-        self.relu3 = nn.ReLU()
-        
-        self.linear2 = nn.Linear(128, 32)
-        self.relu4 = nn.ReLU()
-        
-        self.linear3 = nn.Linear(32, num_classes)
-    
-    def forward(self, x):
-        # conv layers
-        x = self.conv1(x)
-        x = self.relu1(x)
-        x = self.conv2(x)
-        x = self.relu2(x)
-        
-        # flatten for linear layers
-        x = x.view(x.size(0), -1)
-        
-        # linear layers
-        x = self.linear1(x)
-        x = self.relu3(x)
-        x = self.linear2(x)
-        x = self.relu4(x)
-        x = self.linear3(x)
-        
-        return x
-
-def create_sequential_model(model_type='linear'):
-    """creates nn.Sequential model for better converter compatibility"""
-    if model_type == 'linear':
-        return nn.Sequential(
-            nn.Linear(784, 128),
-            nn.ReLU(),
-            nn.Linear(128, 64), 
-            nn.ReLU(),
-            nn.Linear(64, 10)
-        )
     elif model_type == 'conv':
+        params = get_model_sizes('conv', model_size)
         return nn.Sequential(
-            nn.Conv2d(1, 16, kernel_size=3, stride=1, padding=0),  # 1x28x28 -> 16x26x26
+            # conv layers
+            nn.Conv2d(1, params['ch1'], kernel_size=3, stride=1, padding=0),  
             nn.ReLU(),
-            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=0), # 16x26x26 -> 32x24x24
+            nn.Conv2d(params['ch1'], params['ch2'], kernel_size=3, stride=1, padding=0), 
             nn.ReLU(),
-            nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1), # 32x24x24 -> 32x12x12
+            nn.Conv2d(params['ch2'], params['ch3'], kernel_size=3, stride=2, padding=1), 
             nn.ReLU(),
             nn.Flatten(),
-            nn.Linear(32 * 12 * 12, 128),
+            # calculate flattened size: depends on input transformations
+            # for 28x28 input: 28->26->24->12, so 12*12*ch3
+            nn.Linear(params['ch3'] * 12 * 12, params['fc']),
             nn.ReLU(),
-            nn.Linear(128, 10)
+            nn.Linear(params['fc'], 10)
         )
+    
     elif model_type == 'hybrid':
+        params = get_model_sizes('hybrid', model_size)
         return nn.Sequential(
-            nn.Conv2d(1, 8, kernel_size=3, stride=1, padding=1),   # 1x28x28 -> 8x28x28
+            # conv layers  
+            nn.Conv2d(1, params['ch1'], kernel_size=3, stride=1, padding=1),   # 28x28 -> 28x28
             nn.ReLU(),
-            nn.Conv2d(8, 16, kernel_size=3, stride=2, padding=1),  # 8x28x28 -> 16x14x14
+            nn.Conv2d(params['ch1'], params['ch2'], kernel_size=3, stride=2, padding=1),  # 28x28 -> 14x14
             nn.ReLU(),
             nn.Flatten(),
-            nn.Linear(16 * 14 * 14, 128),
+            # flattened size: 14*14*ch2
+            nn.Linear(params['ch2'] * 14 * 14, params['fc1']),
             nn.ReLU(),
-            nn.Linear(128, 32),
+            nn.Linear(params['fc1'], params['fc2']),
             nn.ReLU(), 
-            nn.Linear(32, 10)
+            nn.Linear(params['fc2'], 10)
         )
     else:
         raise ValueError(f"unknown model type: {model_type}")
@@ -213,6 +147,10 @@ def train_model(model, train_loader, test_loader, epochs=5, lr=0.001, device='cp
         for batch_idx, (data, target) in enumerate(train_loader):
             data, target = data.to(device), target.to(device)
             
+            # flatten data for linear models
+            if len(data.shape) == 4 and 'Linear' in str(model[0].__class__.__name__):
+                data = data.view(data.size(0), -1)
+            
             optimizer.zero_grad()
             output = model(data)
             loss = criterion(output, target)
@@ -238,6 +176,11 @@ def train_model(model, train_loader, test_loader, epochs=5, lr=0.001, device='cp
         with torch.no_grad():
             for data, target in test_loader:
                 data, target = data.to(device), target.to(device)
+                
+                # flatten data for linear models
+                if len(data.shape) == 4 and 'Linear' in str(model[0].__class__.__name__):
+                    data = data.view(data.size(0), -1)
+                
                 output = model(data)
                 test_loss += criterion(output, target).item()
                 _, predicted = output.max(1)
@@ -301,6 +244,11 @@ def test_inference(model, test_loader, device='cpu', num_samples=5):
                 break
                 
             data, target = data.to(device), target.to(device)
+            
+            # flatten data for linear models
+            if len(data.shape) == 4 and 'Linear' in str(model[0].__class__.__name__):
+                data = data.view(data.size(0), -1)
+            
             output = model(data[:1])  # process single sample
             
             probabilities = F.softmax(output, dim=1)
@@ -311,27 +259,23 @@ def test_inference(model, test_loader, device='cpu', num_samples=5):
                   f"confidence={probabilities[0][predicted[0]].item():.4f}")
 
 def create_test_converter_script(model_path):
-    """creates a test script to run all three converters"""
+    """creates a test script to run converters"""
     script_content = f'''#!/bin/bash
-# test_conversion.sh - tests all three conversion approaches
+# test_conversion.sh - tests C and LLVM converters
 
-echo "🔄 testing dynamic neural network converters"
+echo "🔄 testing C and LLVM converters"
 echo "model: {model_path}"
 echo
 
-echo "📝 testing c converter..."
+echo "📝 testing C converter..."
 python converter.py {model_path}
 echo
 
-echo "🏗️ testing llvm converter..."
+echo "🏗️ testing LLVM converter..."
 python llvm.py {model_path}
 echo
 
-echo "🎯 testing c++ template converter..."
-python pytoc.py {model_path}
-echo
-
-echo "✅ all conversions complete!"
+echo "✅ conversions complete!"
 echo "check output/ directory for generated files"
 '''
     
@@ -343,9 +287,12 @@ echo "check output/ directory for generated files"
 
 def main():
     parser = argparse.ArgumentParser(description='export pytorch model for converter workflow')
-    parser.add_argument('--model-type', type=str, default='hybrid',
+    parser.add_argument('--model-type', type=str, default='linear',
                         choices=['linear', 'conv', 'hybrid'],
                         help='type of model to create')
+    parser.add_argument('--model-size', type=str, default='small',
+                        choices=['tiny', 'small', 'medium', 'large'],
+                        help='model size (controls number of parameters)')
     parser.add_argument('--epochs', type=int, default=3,
                         help='number of training epochs')
     parser.add_argument('--batch-size', type=int, default=64,
@@ -368,13 +315,14 @@ def main():
     else:
         device = args.device
     
-    print(f"🚀 creating {args.model_type} model for converter workflow")
+    print(f"🚀 creating {args.model_type} model ({args.model_size} size) for converter workflow")
     print(f"device: {device}")
     print()
     
     # create model
-    model = create_sequential_model(args.model_type)
-    print(f"📋 model architecture:")
+    model = create_sequential_model(args.model_type, args.model_size)
+    total_params = sum(p.numel() for p in model.parameters())
+    print(f"📋 model architecture ({total_params:,} parameters):")
     print(model)
     print()
     
@@ -403,8 +351,7 @@ def main():
     print(f"to test converters, run: ./test_conversion.sh")
     print(f"or manually:")
     print(f"  python converter.py {model_path}")
-    print(f"  python llvm.py {model_path}")  
-    print(f"  python pytoc.py {model_path}")
+    print(f"  python llvm.py {model_path}")
 
 if __name__ == '__main__':
     main()
