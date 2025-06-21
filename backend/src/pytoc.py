@@ -16,13 +16,21 @@ class DynamicTemplateCppConverter:
         os.makedirs(self.output_dir, exist_ok=True)
 
     def parse_model_architecture(self):
-        """extracts layer configurations from pytorch model"""
-        # handle pytorch 2.6+ weights_only parameter
+        """extracts layer configurations from pytorch model"""        # handle pytorch 2.6+ weights_only parameter
         try:
-            model = torch.load(self.model_path, map_location='cpu', weights_only=False)
+            loaded_data = torch.load(self.model_path, map_location='cpu', weights_only=False)
         except TypeError:
             # fallback for older pytorch versions
-            model = torch.load(self.model_path, map_location='cpu')
+            loaded_data = torch.load(self.model_path, map_location='cpu')
+        
+        # Check if it's a state_dict or a complete model
+        if isinstance(loaded_data, dict) and not hasattr(loaded_data, 'eval'):
+            # It's a state_dict, parse it directly
+            self.parse_state_dict(loaded_data)
+            return
+        
+        # It's a complete model
+        model = loaded_data
         model.eval()
         
         layer_idx = 0
@@ -75,6 +83,57 @@ class DynamicTemplateCppConverter:
                     'type': 'relu',
                     'layer_id': layer_idx
                 })
+                layer_idx += 1
+
+    def parse_state_dict(self, state_dict):
+        """Parse a PyTorch state_dict directly"""
+        print("📊 Parsing state_dict...")
+        
+        # Sort keys to process layers in order
+        weight_keys = [k for k in state_dict.keys() if k.endswith('.weight')]
+        weight_keys.sort()
+        
+        print(f"🔍 Found weight keys: {weight_keys}")
+        
+        layer_idx = 0
+        
+        for weight_key in weight_keys:
+            bias_key = weight_key.replace('.weight', '.bias')
+            
+            if bias_key in state_dict:
+                weight = state_dict[weight_key].detach().numpy().astype(np.float32)
+                bias = state_dict[bias_key].detach().numpy().astype(np.float32)
+                
+                print(f"🔍 {weight_key} shape: {weight.shape}, {bias_key} shape: {bias.shape}")
+                
+                # Determine layer type based on weight shape
+                if len(weight.shape) == 4:  # Conv2D: (out_channels, in_channels, kernel_h, kernel_w)
+                    self.layer_configs.append({
+                        'type': 'conv2d',
+                        'layer_id': layer_idx,
+                        'in_channels': weight.shape[1],
+                        'out_channels': weight.shape[0],
+                        'kernel_size': (weight.shape[2], weight.shape[3]),
+                        'stride': (1, 1),  # Default stride
+                        'padding': (0, 0),  # Default padding
+                        'weight': weight,
+                        'bias': bias,
+                        'has_bias': True
+                    })
+                elif len(weight.shape) == 2:  # Linear: (out_features, in_features)
+                    self.layer_configs.append({
+                        'type': 'linear',
+                        'layer_id': layer_idx,
+                        'in_features': weight.shape[1],
+                        'out_features': weight.shape[0],
+                        'weight': weight,
+                        'bias': bias,
+                        'has_bias': True
+                    })
+                else:
+                    print(f"⚠️  WARNING: Unsupported weight shape {weight.shape} for {weight_key}")
+                    continue
+                    
                 layer_idx += 1
 
     def format_cpp_array_1d(self, arr: np.ndarray, indent: str = "    ") -> str:
