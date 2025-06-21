@@ -2,10 +2,10 @@
 #define MODEL_H
 
 #define LAYER0_IN_SIZE 784
-#define LAYER0_OUT_SIZE 4
-#define LAYER2_IN_SIZE 4
-#define LAYER2_OUT_SIZE 2
-#define LAYER4_IN_SIZE 2
+#define LAYER0_OUT_SIZE 8
+#define LAYER2_IN_SIZE 8
+#define LAYER2_OUT_SIZE 4
+#define LAYER4_IN_SIZE 4
 #define LAYER4_OUT_SIZE 10
 #define MAX_BUFFER_SIZE 8192
 #define NUM_LAYERS 5
