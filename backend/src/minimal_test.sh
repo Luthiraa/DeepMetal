@@ -1,24 +1,16 @@
 #!/bin/bash
-# minimal_test.sh - tests converters that don't require llvmlite
+# minimal_test.sh - tests C converter
 
-echo "🔄 testing available converters"
+echo "🔄 testing C converter"
 echo
 
-echo "📝 testing c converter..."
+echo "📝 testing C converter..."
 if python converter.py models/test_fixed_model.pth; then
-    echo "✅ c converter succeeded"
+    echo "✅ C converter succeeded"
 else
-    echo "❌ c converter failed"
+    echo "❌ C converter failed"
 fi
 echo
 
-echo "🎯 testing c++ template converter..."
-if python pytoc.py models/test_fixed_model.pth; then
-    echo "✅ c++ converter succeeded"
-else
-    echo "❌ c++ converter failed"
-fi
-echo
-
-echo "✅ basic conversion tests complete!"
-echo "install llvmlite to test llvm converter: pip install llvmlite"
+echo "✅ C conversion test complete!"
+echo "for LLVM IR: install llvmlite then run ./test_conversion.sh"

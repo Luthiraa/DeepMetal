@@ -1,21 +1,19 @@
 #!/bin/bash
-# test_conversion.sh - tests all three conversion approaches
+# test_conversion.sh - tests C and LLVM converters only
 
-echo "🔄 testing dynamic neural network converters"
+echo "🔄 testing C and LLVM converters"
 echo "model: models/mnist_hybrid_model.pth"
 echo
 
-echo "📝 testing c converter..."
+echo "📝 testing C converter..."
 python converter.py models/mnist_hybrid_model.pth
 echo
 
-echo "🏗️ testing llvm converter..."
+echo "🏗️ testing LLVM converter..."
 python llvm.py models/mnist_hybrid_model.pth
 echo
 
-echo "🎯 testing c++ template converter..."
-python pytoc.py models/mnist_hybrid_model.pth
-echo
-
-echo "✅ all conversions complete!"
-echo "check output/ directory for generated files"
+echo "✅ conversions complete!"
+echo "check output/ directory for:"
+echo "  - model.h, model.c, model.o (C code)"
+echo "  - model.ll, model_llvm.o (LLVM IR)"
