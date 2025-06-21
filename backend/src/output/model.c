@@ -34,10 +34,11 @@ const float linear_b4[LAYER4_OUT_SIZE] = {1.840078f, -0.926878f, 1.119754f, -0.0
 
 int predict(const float *input, int input_h, int input_w, int input_ch) {
     const float *prev = input;
-    static float buf1[MAX_BUFFER_SIZE], buf2[MAX_BUFFER_SIZE];
+    static float buf1[MAX_BUFFER_SIZE];  // Only one buffer to save memory
     float *nxt = buf1;
     int prev_size = input_h * input_w * input_ch;
-    int prev_h = input_h, prev_w = input_w, prev_ch = input_ch;
+    // Remove unused variables to avoid warnings
+    (void)prev_size;
 
 
     // linear layer 0: 784 -> 8
