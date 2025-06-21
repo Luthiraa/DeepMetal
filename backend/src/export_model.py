@@ -13,25 +13,34 @@ import argparse
 from torch.utils.data import DataLoader
 
 def get_model_sizes(model_type, size):
-    """returns model architecture parameters based on type and size"""
+    """returns model architecture parameters based on type and size (ultra-aggressive STM32 optimization)"""
     sizes = {
         'linear': {
-            'tiny': [64, 32],           # ~52K params
-            'small': [128, 64],         # ~109K params  
-            'medium': [256, 128],       # ~237K params
-            'large': [512, 256],        # ~670K params
+            'nano': [4, 2],             # ~3K params (~12KB flash) 🔥 ULTRA-TINY
+            'pico': [6, 3],             # ~5K params (~20KB flash) 🔥 ULTRA-TINY  
+            'micro': [8, 4],            # ~6K params (~24KB flash) 🔥 ULTRA-TINY
+            'tiny': [12, 6],            # ~10K params (~40KB flash) ✅ TINY
+            'small': [16, 8],           # ~13K params (~52KB flash) ✅ SMALL
+            'medium': [24, 12],         # ~19K params (~76KB flash) ✅ MEDIUM
+            'large': [32, 16],          # ~26K params (~104KB flash) ✅ LARGE
         },
         'conv': {
-            'tiny': {'ch1': 8, 'ch2': 16, 'ch3': 16, 'fc': 64},      # ~25K params
-            'small': {'ch1': 16, 'ch2': 32, 'ch3': 32, 'fc': 128},   # ~180K params
-            'medium': {'ch1': 32, 'ch2': 64, 'ch3': 64, 'fc': 256},  # ~650K params
-            'large': {'ch1': 64, 'ch2': 128, 'ch3': 128, 'fc': 512}, # ~2.5M params
+            'nano': {'ch1': 2, 'ch2': 4, 'ch3': 4, 'fc': 8},        # ~1.5K params (~6KB) 🔥 ULTRA-TINY
+            'pico': {'ch1': 3, 'ch2': 6, 'ch3': 6, 'fc': 12},       # ~3K params (~12KB) 🔥 ULTRA-TINY
+            'micro': {'ch1': 4, 'ch2': 6, 'ch3': 6, 'fc': 16},      # ~4K params (~16KB) 🔥 ULTRA-TINY
+            'tiny': {'ch1': 4, 'ch2': 8, 'ch3': 8, 'fc': 24},       # ~6K params (~24KB) ✅ TINY
+            'small': {'ch1': 6, 'ch2': 10, 'ch3': 10, 'fc': 32},    # ~10K params (~40KB) ✅ SMALL
+            'medium': {'ch1': 6, 'ch2': 12, 'ch3': 12, 'fc': 48},   # ~18K params (~72KB) ✅ MEDIUM
+            'large': {'ch1': 8, 'ch2': 16, 'ch3': 16, 'fc': 64},    # ~32K params (~128KB) ✅ LARGE
         },
         'hybrid': {
-            'tiny': {'ch1': 4, 'ch2': 8, 'fc1': 64, 'fc2': 16},     # ~25K params
-            'small': {'ch1': 8, 'ch2': 16, 'fc1': 128, 'fc2': 32},  # ~407K params
-            'medium': {'ch1': 16, 'ch2': 32, 'fc1': 256, 'fc2': 64}, # ~1.6M params  
-            'large': {'ch1': 32, 'ch2': 64, 'fc1': 512, 'fc2': 128}, # ~6.4M params
+            'nano': {'ch1': 1, 'ch2': 2, 'fc1': 8, 'fc2': 2},       # ~1K params (~4KB) 🔥 ULTRA-TINY
+            'pico': {'ch1': 2, 'ch2': 3, 'fc1': 12, 'fc2': 3},      # ~2K params (~8KB) 🔥 ULTRA-TINY
+            'micro': {'ch1': 2, 'ch2': 4, 'fc1': 16, 'fc2': 4},     # ~3K params (~12KB) 🔥 ULTRA-TINY
+            'tiny': {'ch1': 3, 'ch2': 5, 'fc1': 24, 'fc2': 6},      # ~6K params (~24KB) ✅ TINY  
+            'small': {'ch1': 3, 'ch2': 6, 'fc1': 32, 'fc2': 8},     # ~8K params (~32KB) ✅ SMALL
+            'medium': {'ch1': 4, 'ch2': 8, 'fc1': 48, 'fc2': 12},   # ~15K params (~60KB) ✅ MEDIUM
+            'large': {'ch1': 4, 'ch2': 8, 'fc1': 64, 'fc2': 16},    # ~26K params (~104KB) ✅ LARGE
         }
     }
     return sizes[model_type][size]
@@ -286,15 +295,31 @@ echo "check output/ directory for generated files"
     print(f"📝 created test script: test_conversion.sh")
 
 def main():
+    print("📊 Ultra-Aggressive STM32F446RE Model Size Reference:")
+    print("Size    | Params | Flash  | STM32 Fit | Accuracy  | Use Case")
+    print("--------|--------|--------|-----------|-----------|------------------")
+    print("nano    | ~3K    | ~12KB  | ✅ Easy   | Poor      | 🔥 Proof-of-concept") 
+    print("pico    | ~5K    | ~20KB  | ✅ Easy   | Low       | 🔥 Basic detection")
+    print("micro   | ~6K    | ~24KB  | ✅ Easy   | Fair      | 🔥 Simple tasks")
+    print("tiny    | ~10K   | ~40KB  | ✅ Easy   | Good      | ⚡ General use")
+    print("small   | ~13K   | ~52KB  | ✅ Easy   | Better    | ⚡ Recommended")
+    print("medium  | ~19K   | ~76KB  | ✅ Easy   | Better+   | 📊 High accuracy")
+    print("large   | ~26K   | ~104KB | ✅ Safe   | Best      | 📊 Max performance")
+    print()
+    print("🔥 = Ultra-tiny (may sacrifice accuracy for extreme memory efficiency)")
+    print("⚡ = Balanced (good accuracy-to-size ratio)")  
+    print("📊 = Larger (best accuracy within STM32 constraints)")
+    print()
+    
     parser = argparse.ArgumentParser(description='export pytorch model for converter workflow')
     parser.add_argument('--model-type', type=str, default='linear',
                         choices=['linear', 'conv', 'hybrid'],
                         help='type of model to create')
-    parser.add_argument('--model-size', type=str, default='small',
-                        choices=['tiny', 'small', 'medium', 'large'],
-                        help='model size (controls number of parameters)')
-    parser.add_argument('--epochs', type=int, default=3,
-                        help='number of training epochs')
+    parser.add_argument('--model-size', type=str, default='micro',
+                        choices=['nano', 'pico', 'micro', 'tiny', 'small', 'medium', 'large'],
+                        help='model size (ultra-aggressive optimization for STM32F446RE) - nano/pico/micro are ultra-tiny')
+    parser.add_argument('--epochs', type=int, default=2,
+                        help='number of training epochs (default: 2 for fast embedded testing)')
     parser.add_argument('--batch-size', type=int, default=64,
                         help='training batch size')
     parser.add_argument('--lr', type=float, default=0.001,
@@ -315,8 +340,26 @@ def main():
     else:
         device = args.device
     
-    print(f"🚀 creating {args.model_type} model ({args.model_size} size) for converter workflow")
+    print(f"🚀 creating {args.model_type} model ({args.model_size} size) for STM32F446RE converter workflow")
     print(f"device: {device}")
+    print()
+    
+    # show expected flash usage
+    size_flash_estimates = {
+        'nano': '~12KB', 'pico': '~20KB', 'micro': '~24KB', 
+        'tiny': '~40KB', 'small': '~52KB', 'medium': '~76KB', 'large': '~104KB'
+    }
+    flash_estimate = size_flash_estimates.get(args.model_size, 'unknown')
+    print(f"💾 expected STM32F446RE flash usage: {flash_estimate} (512KB available)")
+    
+    if args.model_size in ['nano', 'pico', 'micro']:
+        print("🔥 ULTRA-TINY model! Expect reduced accuracy but extreme memory efficiency")
+    elif args.model_size in ['tiny', 'small']:
+        print("⚡ Compact model - good balance of size and accuracy")
+    elif args.model_size in ['medium', 'large']:
+        print("📊 Larger model - better accuracy, more memory usage")
+    else:
+        print("✅ This size should fit comfortably on STM32F446RE")
     print()
     
     # create model

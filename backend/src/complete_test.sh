@@ -7,8 +7,8 @@ echo
 
 # step 1: check if model exists, create if needed
 MODEL_PATH="models/mnist_linear_model.pth"
-echo "📦 creating fresh pytorch model with training..."
-python export_model.py --model-type linear --epochs 2 --model-size small
+echo "📦 creating fresh pytorch model with training (ultra-aggressive STM32 optimization)..."
+python export_model.py --model-type linear --epochs 2 --model-size nano
 echo
 
 # step 2: convert to c
