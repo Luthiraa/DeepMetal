@@ -2,7 +2,7 @@ import { GoogleGeminiEffect } from "./components/google-gemini";
 import { useScroll, useTransform, motion } from "motion/react";
 import React from "react";
 
-export default function Work() {
+export default function Work({ onNavigateToUpload, onNavigateToApp }) {
   const ref = React.useRef(null);
   const heroRef = React.useRef(null);
   const { scrollYProgress } = useScroll({
@@ -38,12 +38,28 @@ export default function Work() {
           <a href="#" className="hover:text-blue-400 transition-colors">
             Home
           </a>
-          <a href="#" className="hover:text-blue-400 transition-colors">
+          {/* <a href="#" className="hover:text-blue-400 transition-colors">
             Our Mission
           </a>
           <a href="#" className="hover:text-blue-400 transition-colors">
             About
-          </a>
+          </a> */}
+          {onNavigateToApp && (
+            <button
+              onClick={onNavigateToApp}
+              className="hover:text-blue-400 transition-colors"
+            >
+              Dashboard
+            </button>
+          )}
+          {onNavigateToUpload && (
+            <button
+              onClick={onNavigateToUpload}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors duration-200 font-medium"
+            >
+              Try MNIST
+            </button>
+          )}
         </nav>
       </header>
 
@@ -58,7 +74,7 @@ export default function Work() {
                 <motion.div 
                   className="w-64 h-64 bg-gray-700/30 rounded-3xl absolute top-10 left-10 transform rotate-[-15deg] shadow-2xl flex items-center justify-center text-6xl backdrop-blur-sm border border-gray-600/50"
                   style={{
-                    x: useTransform(heroScrollProgress, [0, 0.5], [0, -200]),
+                    x: useTransform(heroScrollProgress, [0, 0.5], [0, 0]),
                     y: useTransform(heroScrollProgress, [0, 0.5], [0, -50]),
                     rotate: useTransform(heroScrollProgress, [0, 0.5], [-15, -25]),
                     opacity: useTransform(heroScrollProgress, [0, 0.3], [1, 0.8]),
@@ -67,7 +83,7 @@ export default function Work() {
                   🐍
                 </motion.div>
                 <motion.div 
-                  className="w-64 h-64 bg-gray-600/40 rounded-3xl absolute top-32 left-32 transform  shadow-2xl flex items-center justify-center text-6xl backdrop-blur-sm border border-gray-500/50"
+                  className="w-64 h-72 bg-gray-600/40 rounded-3xl absolute top-32 left-32 transform  shadow-2xl flex items-center justify-center text-6xl backdrop-blur-sm border border-gray-500/50"
                   style={{
                     x: useTransform(heroScrollProgress, [0, 0.5], [0, 100]),
                     y: useTransform(heroScrollProgress, [0, 0.5], [0, -50]),
@@ -75,7 +91,7 @@ export default function Work() {
                     opacity: useTransform(heroScrollProgress, [0, 0.3], [1, 0.8]),
                   }}
                 >
-                  🐍
+                  <img className="w-32 j-32" src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/C_Programming_Language.svg/926px-C_Programming_Language.svg.png" alt="python" />
                 </motion.div>
               </div>
             </div>
@@ -90,16 +106,69 @@ export default function Work() {
                 integrated products, by creating a cheaper method to implement
                 your project.
               </p>
+              {onNavigateToUpload && (
+                <button
+                  onClick={onNavigateToUpload}
+                  className="mt-8 bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-lg transition-colors duration-200 font-medium text-lg"
+                >
+                  Try MNIST Recognition →
+                </button>
+              )}
             </div>
           </div>
         </section>
 
         {/* Features Section */}
         <section className="py-24 px-8 lg:px-16">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-white mb-6">Key Features</h2>
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+              Transform your Python machine learning projects into optimized STM32 applications with our advanced conversion technology.
+            </p>
+          </div>
+          
           <div className="flex flex-wrap justify-center gap-8">
-            <div className="w-80 h-64 bg-gray-800/20 rounded-2xl backdrop-blur-sm border border-gray-700/50"></div>
-            <div className="w-80 h-64 bg-gray-800/20 rounded-2xl backdrop-blur-sm border border-gray-700/50"></div>
-            <div className="w-80 h-64 bg-gray-800/20 rounded-2xl backdrop-blur-sm border border-gray-700/50"></div>
+            {/* Feature 1: Code Conversion */}
+            <div className="w-80 h-80 bg-gray-800/20 rounded-2xl backdrop-blur-sm border border-gray-700/50 p-8 flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mb-6">
+                <svg className="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-4">Code Conversion</h3>
+              <p className="text-gray-300 text-sm leading-relaxed">
+                Seamlessly convert Python ML libraries to optimized C code for STM32 microcontrollers. 
+                Support for popular frameworks like TensorFlow, PyTorch, and scikit-learn.
+              </p>
+            </div>
+
+            {/* Feature 2: Streamlined Implementation */}
+            <div className="w-80 h-80 bg-gray-800/20 rounded-2xl backdrop-blur-sm border border-gray-700/50 p-8 flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mb-6">
+                <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-4">Streamlined Process</h3>
+              <p className="text-gray-300 text-sm leading-relaxed">
+                Simplify your development workflow with automated code generation, 
+                memory optimization, and one-click deployment to STM32 devices.
+              </p>
+            </div>
+
+            {/* Feature 3: Increased Performance */}
+            <div className="w-80 h-80 bg-gray-800/20 rounded-2xl backdrop-blur-sm border border-gray-700/50 p-8 flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center mb-6">
+                <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-4">Increased Performance</h3>
+              <p className="text-gray-300 text-sm leading-relaxed">
+                Achieve up to 10x faster inference times with our optimized C implementations. 
+                Reduced memory footprint and improved power efficiency for edge devices.
+              </p>
+            </div>
           </div>
         </section>
 

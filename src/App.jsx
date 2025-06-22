@@ -4,7 +4,7 @@ import { GoogleGeminiEffect } from "./components/google-gemini.jsx";
 import { useScroll, useTransform } from "motion/react";
 import React from "react";
 
-function App() {
+function App({ onNavigateToWork, onNavigateToUpload }) {
   return (
     <div className="min-h-screen bg-gray-900 text-white pb-100">
       {/* Header */}
@@ -24,8 +24,26 @@ function App() {
               </div>
             </div>
 
-            {/* User Menu */}
+            {/* Navigation and User Menu */}
             <div className="flex items-center space-x-4">
+              <nav className="hidden md:flex items-center space-x-6">
+                {onNavigateToWork && (
+                  <button
+                    onClick={onNavigateToWork}
+                    className="text-gray-300 hover:text-blue-400 transition-colors duration-200 font-medium"
+                  >
+                    Home
+                  </button>
+                )}
+                {onNavigateToUpload && (
+                  <button
+                    onClick={onNavigateToUpload}
+                    className="text-gray-300 hover:text-blue-400 transition-colors duration-200 font-medium"
+                  >
+                    MNIST Demo
+                  </button>
+                )}
+              </nav>
               <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 font-medium">
                 New Project
               </button>
