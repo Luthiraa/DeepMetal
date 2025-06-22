@@ -16,9 +16,11 @@
     "@tsparticles/slim": "^3.8.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.18.1",
+    "lucide-react": "^0.522.0",
     "motion": "^12.18.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-router-dom": "^7.6.2",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.10"
   },
