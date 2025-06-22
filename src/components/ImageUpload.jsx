@@ -291,11 +291,20 @@ const ImageUpload = () => {
                   {/* Processing Info */}
                   <div className="bg-gray-700/50 rounded-lg p-4">
                     <h5 className="font-medium text-gray-200 mb-2">Processing Details</h5>
-                    <div className="space-y-1 text-sm text-gray-400">
-                      <p>Processing Time: {processingTime?.toFixed(2)}ms</p>
-                      <p>Model Type: Server-side Prediction</p>
-                      <p>Uploaded File: {uploadedFilename}</p>
-                    </div>
+                    {/* Processing Details */}
+                    {processingTime !== null && (
+                      <div className="space-y-1 text-xs text-gray-400">
+                        <h4 className="font-semibold text-gray-200 text-sm mb-2">
+                          Processing Details
+                        </h4>
+                        {uploadedFilename && (
+                          <div className="flex justify-between">
+                            <span>Uploaded File:</span>
+                            <span>{uploadedFilename}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               ) : (
