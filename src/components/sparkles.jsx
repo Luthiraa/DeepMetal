@@ -3,7 +3,7 @@ import React, { useId } from "react";
 import { useEffect, useState } from "react";
 import Particles, { initParticlesEngine } from "@tsparticles/react";
 import { loadSlim } from "@tsparticles/slim";
-import { cn } from "@/lib/utils";
+import { cn } from "../../lib/utils";
 import { motion, useAnimation } from "motion/react";
 
 export const SparklesCore = (props) => {
@@ -419,3 +419,118 @@ export const SparklesCore = (props) => {
     </motion.div>
   );
 };
+
+const Star = ({ delay = 0, duration = 3, size = 4, x = 0, y = 0 }) => {
+  return (
+    <motion.div
+      className="absolute pointer-events-none"
+      style={{
+        left: `${x}%`,
+        top: `${y}%`,
+        width: `${size}px`,
+        height: `${size * 1.2}px`,
+      }}
+      initial={{ opacity: 0.3, scale: 0.8, y: 0 }}
+      animate={{
+        opacity: [0.3, 1, 0.3],
+        scale: [0.8, 1.2, 0.8],
+        rotate: [0, 180, 360],
+        y: [0, -30, 0],
+      }}
+      transition={{
+        duration: duration,
+        delay: delay,
+        repeat: Infinity,
+        ease: "easeInOut",
+      }}
+    >
+      <div className="relative w-full h-full">
+        {/* Main star SVG */}
+        <svg
+          className="absolute inset-0 w-full h-full"
+          viewBox="0 0 24 24"
+          fill="white"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+        </svg>
+        
+        {/* Shine effect */}
+        <motion.div
+          className="absolute inset-0"
+          animate={{
+            opacity: [0, 0.6, 0],
+            scale: [0.5, 1.1, 0.5],
+          }}
+          transition={{
+            duration: duration * 0.6,
+            delay: delay + duration * 0.2,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        >
+          <svg
+            className="w-full h-full"
+            viewBox="0 0 24 24"
+            fill="white"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+          </svg>
+        </motion.div>
+        
+        {/* Glow effect */}
+        <motion.div
+          className="absolute inset-0 blur-sm"
+          animate={{
+            opacity: [0.2, 0.6, 0.2],
+            scale: [0.8, 1.3, 0.8],
+          }}
+          transition={{
+            duration: duration * 0.8,
+            delay: delay + duration * 0.1,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        >
+          <svg
+            className="w-full h-full"
+            viewBox="0 0 24 24"
+            fill="white"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+          </svg>
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+};
+
+const FloatingStars = ({ count = 20, className = "" }) => {
+  const stars = Array.from({ length: count }, (_, i) => ({
+    id: i,
+    delay: Math.random() * 5,
+    duration: 4 + Math.random() * 6,
+    size: 12 + Math.random() * 20,
+    x: Math.random() * 20 + (Math.random() > 0.5 ? 80 : 0),
+    y: Math.random() * 100,
+  }));
+
+  return (
+    <div className={`fixed inset-0 overflow-hidden pointer-events-none z-10 ${className}`}>
+      {stars.map((star) => (
+        <Star
+          key={star.id}
+          delay={star.delay}
+          duration={star.duration}
+          size={star.size}
+          x={star.x}
+          y={star.y}
+        />
+      ))}
+    </div>
+  );
+};
+
+export default FloatingStars;

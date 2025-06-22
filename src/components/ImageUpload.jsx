@@ -1,6 +1,12 @@
 import React, { useState, useCallback } from 'react';
 import { motion } from 'motion/react';
-import { Copy } from 'lucide-react';
+import { Copy, Upload, FileImage, Code, Download, CheckCircle, AlertCircle } from 'lucide-react';
+import { Button } from './ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Progress } from './ui/progress';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import FloatingStars from './sparkles';
 
 const ImageUpload = ({ onNavigateToWork, onNavigateToApp }) => {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -15,6 +21,7 @@ const ImageUpload = ({ onNavigateToWork, onNavigateToApp }) => {
   const [showCode, setShowCode] = useState(false);
   const [uploadedFilename, setUploadedFilename] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const handleFileSelect = (file) => {
     if (file && file.type.startsWith('image/')) {
@@ -62,6 +69,18 @@ const ImageUpload = ({ onNavigateToWork, onNavigateToApp }) => {
     setError(null);
     setShowCode(false);
     setPrediction(null);
+    setUploadProgress(0);
+    
+    // Simulate upload progress
+    const progressInterval = setInterval(() => {
+      setUploadProgress(prev => {
+        if (prev >= 90) {
+          clearInterval(progressInterval);
+          return 90;
+        }
+        return prev + 10;
+      });
+    }, 100);
     
     const formData = new FormData();
     formData.append('image', selectedImage);
@@ -84,12 +103,14 @@ const ImageUpload = ({ onNavigateToWork, onNavigateToApp }) => {
       setUploadedFilename(data.uploaded_filename || selectedImage.name);
       setProcessingTime(data.processing_time);
       setShowCode(true);
+      setUploadProgress(100);
 
     } catch (err) {
       setError(err.message || 'An unexpected error occurred.');
       setShowCode(false);
     } finally {
       setIsLoading(false);
+      clearInterval(progressInterval);
     }
   };
 
@@ -105,301 +126,422 @@ const ImageUpload = ({ onNavigateToWork, onNavigateToApp }) => {
     setError(null);
     setCopySuccess(false);
     setIsLoading(false);
+    setUploadProgress(0);
   };
 
   return (
     <div className="min-h-screen bg-gray-900 text-white overflow--scroll">
+      {/* Floating Stars */}
+      <FloatingStars count={8} />
+      
       {/* Header */}
-      <header className=" fixed top-0 left-0 w-full z-50 bg-[#0a101f]/50 backdrop-blur-sm py-8 px-8 lg:px-16 flex justify-between items-center">
-        <div className="flex-row items-center justify-center flex space-x-4">
-          <div className="text-4xl font-bold">Py2STM</div>
-          <img src="logo.svg" alt="logo" className="w-10 h-10" />
-        </div>
+      <motion.header 
+        className="fixed top-0 left-0 w-full z-50 bg-[#0a101f]/50 backdrop-blur-sm py-8 px-8 lg:px-16 flex justify-between items-center"
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+      >
+        <motion.div 
+          className="flex-row items-center justify-center flex space-x-4"
+          initial={{ x: -50, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+        >
+          <motion.div 
+            className="text-4xl font-bold"
+            whileHover={{ scale: 1.05 }}
+            transition={{ duration: 0.2 }}
+          >
+            Py2STM
+          </motion.div>
+          <Avatar>
+            <AvatarImage src="logo.svg" alt="logo" />
+            <AvatarFallback className="bg-blue-600 text-white">P</AvatarFallback>
+          </Avatar>
+        </motion.div>
 
-        <nav className="hidden md:flex items-center space-x-8 font-bold text-xl">
+        <motion.nav 
+          className="hidden md:flex items-center space-x-8 font-bold text-xl"
+          initial={{ x: 50, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+        >
           {onNavigateToWork && (
-            <button
+            <Button
+              variant="ghost"
               onClick={onNavigateToWork}
-              className="hover:text-blue-400 transition-colors"
+              className="hover:text-blue-400 transition-colors text-xl font-bold"
             >
               Home
-            </button>
+            </Button>
           )}
           {onNavigateToApp && (
-            <button
+            <Button
+              variant="ghost"
               onClick={onNavigateToApp}
-              className="hover:text-blue-400 transition-colors"
+              className="hover:text-blue-400 transition-colors text-xl font-bold"
             >
               Dashboard
-            </button>
+            </Button>
           )}
-        </nav>
-      </header>
+        </motion.nav>
+      </motion.header>
 
       {/* Main Content */}
       <main className="pt-40 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center mb-8">
+        <motion.div 
+          className="text-center mb-8"
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
+        >
           <h2 className="text-3xl font-bold text-gray-100 mb-4">
             MNIST Digit Recognition
           </h2>
           <p className="text-gray-400 max-w-2xl mx-auto">
             Upload an image of a handwritten digit. The prediction will be based on the filename.
           </p>
-        </div>
+        </motion.div>
 
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Upload Section */}
-          <div className="space-y-6">
-            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-              <h3 className="text-xl font-semibold text-gray-100 mb-4">
-                Upload Image
-              </h3>
-              
-              {/* Drag & Drop Area */}
-              <div
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200 ${
-                  isDragOver
-                    ? 'border-blue-400 bg-blue-400/10'
-                    : 'border-gray-600 hover:border-gray-500'
-                }`}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-              >
-                {previewUrl ? (
-                  <div className="space-y-4">
-                    <img
-                      src={previewUrl}
-                      alt="Preview"
-                      className="max-w-full h-48 object-contain mx-auto rounded-lg"
-                    />
-                    <div className="space-y-2">
-                      <p className="text-sm text-gray-400">
-                        {selectedImage?.name}
-                      </p>
-                      <div className="flex justify-center space-x-2">
-                        <button
-                          onClick={processImage}
-                          disabled={isLoading}
-                          className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
-                        >
-                          {isLoading ? 'Processing...' : 'Process Image'}
-                        </button>
-                        <button
-                          onClick={resetForm}
-                          className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg transition-colors duration-200"
-                        >
-                          Reset
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto">
-                      <svg
-                        className="w-8 h-8 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                        />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-lg font-medium text-gray-200">
-                        Drop your image here
-                      </p>
-                      <p className="text-sm text-gray-400 mt-1">
-                        or click to browse files
-                      </p>
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileInput}
-                      className="hidden"
-                      id="file-input"
-                    />
-                    <label
-                      htmlFor="file-input"
-                      className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg cursor-pointer transition-colors duration-200 inline-block"
-                    >
-                      Choose File
-                    </label>
-                  </div>
-                )}
-              </div>
-
-              {/* Error Display */}
-              {error && (
+          <motion.div 
+            className="space-y-6"
+            initial={{ x: -100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.8, ease: "easeOut" }}
+          >
+            <Card className="bg-gray-800 border-gray-700">
+              <CardHeader>
+                <CardTitle className="text-xl text-gray-100 flex items-center gap-2">
+                  <Upload className="w-5 h-5" />
+                  Upload Image
+                </CardTitle>
+                <CardDescription className="text-gray-400">
+                  Drag and drop your image or click to browse files
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {/* Drag & Drop Area */}
                 <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-4 p-4 bg-red-500/20 border border-red-500/50 rounded-lg"
+                  className={`border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200 ${
+                    isDragOver
+                      ? 'border-blue-400 bg-blue-400/10'
+                      : 'border-gray-600 hover:border-gray-500'
+                  }`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  <p className="text-red-400 text-sm">{error}</p>
+                  {previewUrl ? (
+                    <motion.div 
+                      className="space-y-4"
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      <img
+                        src={previewUrl}
+                        alt="Preview"
+                        className="max-w-full h-48 object-contain mx-auto rounded-lg"
+                      />
+                      <div className="space-y-2">
+                        <p className="text-sm text-gray-400">
+                          {selectedImage?.name}
+                        </p>
+                        <div className="flex justify-center space-x-2">
+                          <Button
+                            onClick={processImage}
+                            disabled={isLoading}
+                            variant="gradient"
+                            className="font-medium"
+                          >
+                            {isLoading ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                Processing...
+                              </>
+                            ) : (
+                              <>
+                                <Code className="w-4 h-4 mr-2" />
+                                Process Image
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            onClick={resetForm}
+                            variant="outline"
+                            className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                          >
+                            Reset
+                          </Button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <motion.div 
+                      className="space-y-4"
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      <motion.div 
+                        className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto"
+                        whileHover={{ scale: 1.1, rotate: 5 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <FileImage className="w-8 h-8 text-gray-400" />
+                      </motion.div>
+                      <div>
+                        <p className="text-lg font-medium text-gray-200">
+                          Drop your image here
+                        </p>
+                        <p className="text-sm text-gray-400 mt-1">
+                          or click to browse files
+                        </p>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileInput}
+                        className="hidden"
+                        id="file-input"
+                      />
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="gradient" className="font-medium">
+                            <Upload className="w-4 h-4 mr-2" />
+                            Choose File
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="bg-gray-800 border-gray-700">
+                          <DialogHeader>
+                            <DialogTitle className="text-gray-100">Select Image File</DialogTitle>
+                            <DialogDescription className="text-gray-400">
+                              Choose an image file to upload for digit recognition
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <label htmlFor="file-input" className="block">
+                              <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-gray-500 transition-colors cursor-pointer">
+                                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                                <p className="text-gray-200 font-medium">Click to browse files</p>
+                                <p className="text-gray-400 text-sm">or drag and drop</p>
+                              </div>
+                            </label>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleFileInput}
+                              className="hidden"
+                              id="file-input"
+                            />
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </motion.div>
+                  )}
                 </motion.div>
-              )}
-            </div>
 
-            {/* Loading State */}
-            {isLoading && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="bg-gray-800 rounded-lg p-6 border border-gray-700"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-400"></div>
-                  <div>
-                    <p className="text-gray-200 font-medium">Generating Code...</p>
-                    <p className="text-sm text-gray-400">
-                      Please wait...
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </div>
+                {/* Progress Bar */}
+                {isLoading && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-4 space-y-2"
+                  >
+                    <div className="flex justify-between text-sm text-gray-400">
+                      <span>Processing...</span>
+                      <span>{uploadProgress}%</span>
+                    </div>
+                    <Progress value={uploadProgress} className="h-2" />
+                  </motion.div>
+                )}
+
+                {/* Error Display */}
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-4 p-4 bg-red-500/20 border border-red-500/50 rounded-lg flex items-center gap-2"
+                  >
+                    <AlertCircle className="w-4 h-4 text-red-400" />
+                    <p className="text-red-400 text-sm">{error}</p>
+                  </motion.div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
 
           {/* Results Section */}
-          <div className="space-y-6">
-            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-              <h3 className="text-xl font-semibold text-gray-100 mb-4">
-                Prediction Results
-              </h3>
-              
-              {prediction !== null ? (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="space-y-6"
-                >
-                  {/* Prediction Display */}
-                  <div className="text-center">
-                    <div className="w-32 h-32 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <span className="text-6xl font-bold text-white">
-                        {prediction}
-                      </span>
+          <motion.div 
+            className="space-y-6"
+            initial={{ x: 100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.8, delay: 1, ease: "easeOut" }}
+          >
+            <Card className="bg-gray-800 border-gray-700">
+              <CardHeader>
+                <CardTitle className="text-xl text-gray-100 flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5" />
+                  Prediction Results
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {prediction !== null ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="space-y-6"
+                  >
+                    {/* Prediction Display */}
+                    <div className="text-center">
+                      <motion.div 
+                        className="w-32 h-32 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4"
+                        initial={{ scale: 0, rotate: -180 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={{ duration: 0.8, type: "spring", bounce: 0.4 }}
+                      >
+                        <span className="text-6xl font-bold text-white">
+                          {prediction}
+                        </span>
+                      </motion.div>
+                      <h4 className="text-2xl font-bold text-gray-100 mb-2">
+                        Predicted Digit: {prediction}
+                      </h4>
+                      <p className="text-gray-400">
+                        Confidence: {(confidence * 100).toFixed(1)}%
+                      </p>
                     </div>
-                    <h4 className="text-2xl font-bold text-gray-100 mb-2">
-                      Predicted Digit: {prediction}
-                    </h4>
+
+                    {/* Processing Info */}
+                    <Card className="bg-gray-700/50 border-gray-600">
+                      <CardContent className="p-4">
+                        <h5 className="font-medium text-gray-200 mb-2">Processing Details</h5>
+                        <div className="space-y-1 text-sm text-gray-400">
+                          <p>Processing Time: {processingTime?.toFixed(2)}ms</p>
+                          <p>Model Type: Server-side Prediction</p>
+                          <p>Uploaded File: {uploadedFilename}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ) : (
+                  <div className="text-center py-12">
+                    <motion.div 
+                      className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                    >
+                      <FileImage className="w-8 h-8 text-gray-400" />
+                    </motion.div>
                     <p className="text-gray-400">
-                      Confidence: {(confidence * 100).toFixed(1)}%
+                      Upload an image to see prediction results
                     </p>
                   </div>
-
-                  {/* Processing Info */}
-                  <div className="bg-gray-700/50 rounded-lg p-4">
-                    <h5 className="font-medium text-gray-200 mb-2">Processing Details</h5>
-                    {/* Processing Details */}
-                    {processingTime !== null && (
-                      <div className="space-y-1 text-xs text-gray-400">
-                        <h4 className="font-semibold text-gray-200 text-sm mb-2">
-                          Processing Details
-                        </h4>
-                        {uploadedFilename && (
-                          <div className="flex justify-between">
-                            <span>Uploaded File:</span>
-                            <span>{uploadedFilename}</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              ) : (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg
-                      className="w-8 h-8 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                  </div>
-                  <p className="text-gray-400">
-                    Upload an image to see prediction results
-                  </p>
-                </div>
-              )}
-            </div>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Generated Code Section */}
             {showCode && (
-              <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-semibold text-white">Generated STM32 Code</h3>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(modelC);
-                      setCopySuccess(true);
-                      setTimeout(() => setCopySuccess(false), 2000);
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-                  >
-                    <Copy className="w-4 h-4" />
-                    {copySuccess ? 'Copied!' : 'Copy model_clean.c'}
-                  </button>
-                </div>
-
-                {/* Main Clean C Content */}
-                <div className="bg-gray-900 rounded-lg p-4">
-                  <h4 className="font-medium text-white mb-2">model_clean.c</h4>
-                  <pre className="text-sm text-gray-300 overflow-x-auto whitespace-pre-wrap">
-                    {modelC}
-                  </pre>
-                </div>
-              </div>
+              <motion.div
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+              >
+                <Card className="bg-gray-800 border-gray-700">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-xl text-white flex items-center gap-2">
+                        <Code className="w-5 h-5" />
+                        Generated STM32 Code
+                      </CardTitle>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          onClick={() => {
+                            navigator.clipboard.writeText(modelC);
+                            setCopySuccess(true);
+                            setTimeout(() => setCopySuccess(false), 2000);
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                        >
+                          <Copy className="w-4 h-4 mr-2" />
+                          {copySuccess ? 'Copied!' : 'Copy Code'}
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            const blob = new Blob([modelC], { type: 'text/plain' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'model_clean.c';
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(url);
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          Download
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="bg-gray-900 rounded-lg p-4 max-h-96 overflow-y-auto">
+                      <h4 className="font-medium text-white mb-2">model_clean.c</h4>
+                      <pre className="text-sm text-gray-300 overflow-x-auto whitespace-pre-wrap">
+                        {modelC}
+                      </pre>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
             )}
 
             {/* Instructions */}
-            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-100 mb-3">
-                How it works
-              </h3>
-              <div className="space-y-3 text-sm text-gray-400">
-                <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-xs font-bold text-white mt-0.5">
-                    1
+            <Card className="bg-gray-800 border-gray-700">
+              <CardHeader>
+                <CardTitle className="text-lg text-gray-100">How it works</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3 text-sm text-gray-400">
+                  <div className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-xs font-bold text-white mt-0.5">
+                      1
+                    </div>
+                    <p>
+                      <strong>Upload an Image</strong> of a handwritten digit (0-9).
+                    </p>
                   </div>
-                  <p>
-                    <strong>Upload an Image</strong> of a handwritten digit (0-9).
-                  </p>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-xs font-bold text-white mt-0.5">
-                    2
+                  <div className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-xs font-bold text-white mt-0.5">
+                      2
+                    </div>
+                    <p>
+                      The backend reads the digit from the filename and generates optimized STM32 C code.
+                    </p>
                   </div>
-                  <p>
-                    The backend reads the digit from the filename and generates optimized STM32 C code.
-                  </p>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-xs font-bold text-white mt-0.5">
-                    3
+                  <div className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-xs font-bold text-white mt-0.5">
+                      3
+                    </div>
+                    <p>
+                      The predicted digit and the generated `main_clean.c` file are displayed.
+                    </p>
                   </div>
-                  <p>
-                    The predicted digit and the generated `main_clean.c` file are displayed.
-                  </p>
                 </div>
-              </div>
-            </div>
-          </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
       </main>
     </div>
