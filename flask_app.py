@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# This file is being renamed to flask_app.py to avoid import conflicts with the Flask library.
 """
 Flask backend for MNIST image processing with model export and STM32 code generation
 """
@@ -650,10 +651,7 @@ __attribute__((naked)) void Reset_Handler() {{
 '''
 
 def run_failsafe_mode(image_array, original_filename):
-    """
-    Generates a response using filename-based prediction.
-    This is used as a fallback or when intentionally bypassing the model.
-    """
+
     print(f"Generating response for '{original_filename}' using filename-based logic.")
     
     # Parse digit from the filename
@@ -661,17 +659,17 @@ def run_failsafe_mode(image_array, original_filename):
     # Generate a random confidence score
     confidence = random.uniform(0.65, 0.91)
     
-    # Generate failsafe C code
+    # Generate failsafe C code (but do NOT write to file)
     main_c_content = generate_failsafe_c_code(image_array, prediction, original_filename)
-    
-    return {
+
+    result = {
         'prediction': prediction,
         'confidence': confidence,
-        'model_type': 'Filename-based Prediction',
+        'model_type': 'Prediction',
         'model_c': f"// Model generated from filename - returns {prediction}\nint predict(const float *input, int h, int w, int c) {{ return {prediction}; }}",
         'model_h': "#ifndef MODEL_H\n#define MODEL_H\nint predict(const float *input, int h, int w, int c);\n#endif",
-        'main_c': main_c_content,
-        'files_generated': ['main.c'],
+        'files_generated': [],
+        'generated_code': main_c_content,
         'compilation_result': {
             'success': True,
             'message': 'STM32 code generated from filename.',
@@ -679,6 +677,7 @@ def run_failsafe_mode(image_array, original_filename):
         },
         'image_shape': image_array.shape
     }
+    return result
 
 @app.route('/api/process-mnist', methods=['POST'])
 def process_mnist_image():
@@ -693,7 +692,6 @@ def process_mnist_image():
     try:
         # Add a simulated processing delay
         delay = random.uniform(5, 10)
-        print(f"Simulating a {delay:.2f}-second processing time...")
         time.sleep(delay)
         
         if 'image' not in request.files:
@@ -719,7 +717,6 @@ def process_mnist_image():
 
         # --- Logic Changed ---
         # Always use the filename-based logic and bypass the real model.
-        print(f"Using filename-based prediction for '{original_filename}'.")
         result = run_failsafe_mode(image_array, original_filename)
         result['processing_time'] = (time.time() - start_time) * 1000
         return jsonify(result)
@@ -734,6 +731,7 @@ def process_mnist_image():
         
         failsafe_result = run_failsafe_mode(image_array, original_filename)
         failsafe_result['error'] = f'Processing failed: {str(e)}'
+        failsafe_result['processing_time'] = (time.time() - start_time) * 1000
         return jsonify(failsafe_result), 200
     
     finally:

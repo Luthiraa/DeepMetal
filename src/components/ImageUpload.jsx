@@ -80,7 +80,7 @@ const ImageUpload = () => {
       const data = await response.json();
       setPrediction(data.prediction);
       setConfidence(data.confidence);
-      setModelC(data.model_c || '');
+      setModelC(data.generated_code || data.model_c || '');
       setUploadedFilename(data.uploaded_filename || selectedImage.name);
       setProcessingTime(data.processing_time);
       setShowCode(true);
