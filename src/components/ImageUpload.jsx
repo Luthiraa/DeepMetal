@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { Copy, Upload, FileImage, Code, Download, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from './ui/button';
@@ -22,6 +22,8 @@ const ImageUpload = ({ onNavigateToWork, onNavigateToApp }) => {
   const [uploadedFilename, setUploadedFilename] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [animatedCode, setAnimatedCode] = useState('');
+  const animationTimeoutRef = useRef(null);
 
   const handleFileSelect = (file) => {
     if (file && file.type.startsWith('image/')) {
@@ -114,6 +116,28 @@ const ImageUpload = ({ onNavigateToWork, onNavigateToApp }) => {
     }
   };
 
+  // Animate code output line by line when modelC changes
+  useEffect(() => {
+    if (!showCode || !modelC) {
+      setAnimatedCode('');
+      return;
+    }
+    setAnimatedCode('');
+    const lines = modelC.split('\n');
+    let currentLine = 0;
+    function showNextLine() {
+      setAnimatedCode(prev => prev + (prev ? '\n' : '') + lines[currentLine]);
+      currentLine++;
+      if (currentLine < lines.length) {
+        animationTimeoutRef.current = setTimeout(showNextLine, 30); // fast
+      }
+    }
+    showNextLine();
+    return () => {
+      if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current);
+    };
+  }, [modelC, showCode]);
+
   const resetForm = () => {
     setSelectedImage(null);
     setPreviewUrl(null);
@@ -127,6 +151,8 @@ const ImageUpload = ({ onNavigateToWork, onNavigateToApp }) => {
     setCopySuccess(false);
     setIsLoading(false);
     setUploadProgress(0);
+    setAnimatedCode('');
+    if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current);
   };
 
   return (
@@ -451,8 +477,9 @@ const ImageUpload = ({ onNavigateToWork, onNavigateToApp }) => {
                 initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
+                className="col-span-full w-full"
               >
-                <Card className="bg-gray-800 border-gray-700">
+                <Card className="bg-gray-800 border-gray-700 w-full">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-xl text-white flex items-center gap-2">
@@ -499,7 +526,7 @@ const ImageUpload = ({ onNavigateToWork, onNavigateToApp }) => {
                     <div className="bg-gray-900 rounded-lg p-4 max-h-96 overflow-y-auto">
                       <h4 className="font-medium text-white mb-2">model_clean.c</h4>
                       <pre className="text-sm text-gray-300 overflow-x-auto whitespace-pre-wrap">
-                        {modelC}
+                        {animatedCode}
                       </pre>
                     </div>
                   </CardContent>
