@@ -33,3 +33,7 @@ backend/src/data/*
 *.tar.bz2
 *.tar.xz
 
+# Ignore hardcoded C array files for fallback digit data
+*_arrays.c
+mnist_digits_arrays.c
+
