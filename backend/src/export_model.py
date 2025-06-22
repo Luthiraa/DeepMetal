@@ -13,7 +13,7 @@ import argparse
 from torch.utils.data import DataLoader, Dataset
 from PIL import Image
 import pandas as pd
-from models import get_dataset_config, create_model, get_available_models
+from archive.models import get_dataset_config, create_model, get_available_models
 
 # ==================== Dataset Loaders ====================
 
