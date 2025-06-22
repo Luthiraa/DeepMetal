@@ -13,3 +13,8 @@ sympy==1.14.0
 torch==2.7.1
 torchvision==0.22.1
 typing_extensions==4.14.0
+
+# Flask backend dependencies
+flask==3.1.0
+flask-cors==5.0.0
+werkzeug==3.1.3

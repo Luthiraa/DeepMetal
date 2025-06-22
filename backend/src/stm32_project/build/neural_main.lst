@@ -1,4 +1,4 @@
-ARM GAS  /tmp/cco4vhKm.s 			page 1
+ARM GAS  /tmp/cch6bb4i.s 			page 1
 
 
    1              		.cpu cortex-m4
@@ -20,15 +20,16 @@ ARM GAS  /tmp/cco4vhKm.s 			page 1
   17              	.Ltext0:
   18              		.cfi_sections	.debug_frame
   19              		.file 1 "neural_main.c"
-  20              		.section	.text.setup_system_clock,"ax",%progbits
+  20              		.section	.text.delay_ms,"ax",%progbits
   21              		.align	1
-  22              		.global	setup_system_clock
+  22              		.global	delay_ms
   23              		.syntax unified
   24              		.thumb
   25              		.thumb_func
-  27              	setup_system_clock:
-  28              	.LFB0:
-   1:neural_main.c **** // Working STM32F446RE Neural Network with UART
+  27              	delay_ms:
+  28              	.LVL0:
+  29              	.LFB0:
+   1:neural_main.c **** // Working STM32F446RE Neural Network
    2:neural_main.c **** #include "../output/model.h"
    3:neural_main.c **** 
    4:neural_main.c **** // Test MNIST pattern
@@ -42,2066 +43,1303 @@ ARM GAS  /tmp/cco4vhKm.s 			page 1
   12:neural_main.c **** // Forward declarations
   13:neural_main.c **** void Reset_Handler(void);
   14:neural_main.c **** void delay_ms(int ms);
-  15:neural_main.c **** void setup_uart(void);
-  16:neural_main.c **** void uart_send_char(char c);
-  17:neural_main.c **** void uart_send_string(const char* str);
-  18:neural_main.c **** void uart_send_number(int num);
-  19:neural_main.c **** void check_stack_usage(void);
-  20:neural_main.c **** 
-  21:neural_main.c **** // Vector table (proper setup) - Use more stack space
-  22:neural_main.c **** __attribute__((section(".isr_vector")))
-  23:neural_main.c **** void (* const vector_table[])(void) = {
-  24:neural_main.c ****     (void (*)(void))((unsigned long)0x20010000),  // Stack pointer - reduced from 128KB to 64KB to 
-  25:neural_main.c ****     Reset_Handler,   // Reset handler
-  26:neural_main.c **** };
-  27:neural_main.c **** 
-  28:neural_main.c **** // System clock setup
-  29:neural_main.c **** void setup_system_clock() {
-  29              		.loc 1 29 27 view -0
-ARM GAS  /tmp/cco4vhKm.s 			page 2
+  15:neural_main.c **** 
+  16:neural_main.c **** // Vector table (proper setup)
+  17:neural_main.c **** __attribute__((section(".isr_vector")))
+  18:neural_main.c **** unsigned int vector_table[] = {
+  19:neural_main.c ****     0x20020000,                    // Stack pointer
+  20:neural_main.c ****     (unsigned int)Reset_Handler,   // Reset handler
+  21:neural_main.c **** };
+  22:neural_main.c **** 
+  23:neural_main.c **** // Delay function
+  24:neural_main.c **** void delay_ms(int ms) {
+  30              		.loc 1 24 23 view -0
+  31              		.cfi_startproc
+  32              		@ args = 0, pretend = 0, frame = 8
+  33              		@ frame_needed = 0, uses_anonymous_args = 0
+  34              		@ link register save eliminated.
+ARM GAS  /tmp/cch6bb4i.s 			page 2
 
 
-  30              		.cfi_startproc
-  31              		@ args = 0, pretend = 0, frame = 0
-  32              		@ frame_needed = 0, uses_anonymous_args = 0
-  33              		@ link register save eliminated.
-  30:neural_main.c ****     // Enable HSI (16MHz internal oscillator)
-  31:neural_main.c ****     *((volatile unsigned int*)0x40023800) |= 0x00000001;  // RCC_CR HSI ON
-  34              		.loc 1 31 5 view .LVU1
-  35 0000 0C4A     		ldr	r2, .L3
-  36 0002 D2F80038 		ldr	r3, [r2, #2048]
-  37              		.loc 1 31 43 is_stmt 0 view .LVU2
-  38 0006 43F00103 		orr	r3, r3, #1
-  39 000a C2F80038 		str	r3, [r2, #2048]
-  32:neural_main.c ****     
-  33:neural_main.c ****     // Wait for HSI ready
-  34:neural_main.c ****     while(!(*((volatile unsigned int*)0x40023800) & 0x00000002));
-  40              		.loc 1 34 5 is_stmt 1 view .LVU3
-  41              	.L2:
-  42              		.loc 1 34 11 discriminator 1 view .LVU4
-  43              		.loc 1 34 13 is_stmt 0 discriminator 1 view .LVU5
-  44 000e 094B     		ldr	r3, .L3
-  45 0010 D3F80038 		ldr	r3, [r3, #2048]
-  46              		.loc 1 34 11 discriminator 1 view .LVU6
-  47 0014 13F0020F 		tst	r3, #2
-  48 0018 F9D0     		beq	.L2
-  35:neural_main.c ****     
-  36:neural_main.c ****     // Use HSI as system clock (default)
-  37:neural_main.c ****     *((volatile unsigned int*)0x40023808) &= ~0x00000003;  // Clear SW bits
-  49              		.loc 1 37 5 is_stmt 1 view .LVU7
-  50 001a 064B     		ldr	r3, .L3
-  51 001c D3F80828 		ldr	r2, [r3, #2056]
-  52              		.loc 1 37 43 is_stmt 0 view .LVU8
-  53 0020 22F00302 		bic	r2, r2, #3
-  54 0024 C3F80828 		str	r2, [r3, #2056]
-  38:neural_main.c ****     *((volatile unsigned int*)0x40023808) |= 0x00000000;   // HSI as system clock
-  55              		.loc 1 38 5 is_stmt 1 view .LVU9
-  56              		.loc 1 38 43 is_stmt 0 view .LVU10
-  57 0028 D3F80828 		ldr	r2, [r3, #2056]
-  58 002c C3F80828 		str	r2, [r3, #2056]
-  39:neural_main.c **** }
-  59              		.loc 1 39 1 view .LVU11
-  60 0030 7047     		bx	lr
-  61              	.L4:
-  62 0032 00BF     		.align	2
-  63              	.L3:
-  64 0034 00300240 		.word	1073885184
-  65              		.cfi_endproc
-  66              	.LFE0:
-  68              		.section	.text.delay_ms,"ax",%progbits
-  69              		.align	1
-  70              		.global	delay_ms
-  71              		.syntax unified
-  72              		.thumb
-  73              		.thumb_func
-  75              	delay_ms:
-  76              	.LVL0:
-  77              	.LFB1:
-  40:neural_main.c **** 
-ARM GAS  /tmp/cco4vhKm.s 			page 3
+  35              		.loc 1 24 23 is_stmt 0 view .LVU1
+  36 0000 82B0     		sub	sp, sp, #8
+  37              	.LCFI0:
+  38              		.cfi_def_cfa_offset 8
+  25:neural_main.c ****     // Approximate delay (assumes 16MHz internal clock)
+  26:neural_main.c ****     for(volatile int i = 0; i < ms * 1000; i++);
+  39              		.loc 1 26 5 is_stmt 1 view .LVU2
+  40              	.LBB2:
+  41              		.loc 1 26 9 view .LVU3
+  42              		.loc 1 26 22 is_stmt 0 view .LVU4
+  43 0002 0023     		movs	r3, #0
+  44 0004 0193     		str	r3, [sp, #4]
+  45              		.loc 1 26 5 view .LVU5
+  46 0006 02E0     		b	.L2
+  47              	.L3:
+  48              		.loc 1 26 45 is_stmt 1 discriminator 3 view .LVU6
+  49 0008 019B     		ldr	r3, [sp, #4]
+  50 000a 0133     		adds	r3, r3, #1
+  51 000c 0193     		str	r3, [sp, #4]
+  52              	.L2:
+  53              		.loc 1 26 31 discriminator 1 view .LVU7
+  54              		.loc 1 26 36 is_stmt 0 discriminator 1 view .LVU8
+  55 000e 4FF47A73 		mov	r3, #1000
+  56 0012 00FB03F3 		mul	r3, r0, r3
+  57              		.loc 1 26 31 discriminator 1 view .LVU9
+  58 0016 019A     		ldr	r2, [sp, #4]
+  59 0018 9342     		cmp	r3, r2
+  60 001a F5DC     		bgt	.L3
+  61              	.LBE2:
+  27:neural_main.c **** }
+  62              		.loc 1 27 1 view .LVU10
+  63 001c 02B0     		add	sp, sp, #8
+  64              	.LCFI1:
+  65              		.cfi_def_cfa_offset 0
+  66              		@ sp needed
+  67 001e 7047     		bx	lr
+  68              		.cfi_endproc
+  69              	.LFE0:
+  71              		.section	.text.setup_gpio,"ax",%progbits
+  72              		.align	1
+  73              		.global	setup_gpio
+  74              		.syntax unified
+  75              		.thumb
+  76              		.thumb_func
+  78              	setup_gpio:
+  79              	.LFB1:
+  28:neural_main.c **** 
+  29:neural_main.c **** // GPIO setup
+  30:neural_main.c **** void setup_gpio() {
+  80              		.loc 1 30 19 is_stmt 1 view -0
+  81              		.cfi_startproc
+  82              		@ args = 0, pretend = 0, frame = 0
+  83              		@ frame_needed = 0, uses_anonymous_args = 0
+  84              		@ link register save eliminated.
+  31:neural_main.c ****     // Enable GPIOA clock
+  32:neural_main.c ****     *((volatile unsigned int*)0x40023830) |= 0x00000001;
+  85              		.loc 1 32 5 view .LVU12
+ARM GAS  /tmp/cch6bb4i.s 			page 3
 
 
-  41:neural_main.c **** // Delay function
-  42:neural_main.c **** void delay_ms(int ms) {
-  78              		.loc 1 42 23 is_stmt 1 view -0
-  79              		.cfi_startproc
-  80              		@ args = 0, pretend = 0, frame = 8
-  81              		@ frame_needed = 0, uses_anonymous_args = 0
-  82              		@ link register save eliminated.
-  83              		.loc 1 42 23 is_stmt 0 view .LVU13
-  84 0000 82B0     		sub	sp, sp, #8
-  85              	.LCFI0:
-  86              		.cfi_def_cfa_offset 8
-  43:neural_main.c ****     // More accurate delay for 16MHz clock
-  44:neural_main.c ****     for(volatile int i = 0; i < ms * 4000; i++);
-  87              		.loc 1 44 5 is_stmt 1 view .LVU14
-  88              	.LBB2:
-  89              		.loc 1 44 9 view .LVU15
-  90              		.loc 1 44 22 is_stmt 0 view .LVU16
-  91 0002 0023     		movs	r3, #0
-  92 0004 0193     		str	r3, [sp, #4]
-  93              		.loc 1 44 5 view .LVU17
-  94 0006 02E0     		b	.L6
-  95              	.L7:
-  96              		.loc 1 44 45 is_stmt 1 discriminator 3 view .LVU18
-  97 0008 019B     		ldr	r3, [sp, #4]
-  98 000a 0133     		adds	r3, r3, #1
-  99 000c 0193     		str	r3, [sp, #4]
- 100              	.L6:
- 101              		.loc 1 44 31 discriminator 1 view .LVU19
- 102              		.loc 1 44 36 is_stmt 0 discriminator 1 view .LVU20
- 103 000e 4FF47A63 		mov	r3, #4000
- 104 0012 00FB03F3 		mul	r3, r0, r3
- 105              		.loc 1 44 31 discriminator 1 view .LVU21
- 106 0016 019A     		ldr	r2, [sp, #4]
- 107 0018 9342     		cmp	r3, r2
- 108 001a F5DC     		bgt	.L7
- 109              	.LBE2:
-  45:neural_main.c **** }
- 110              		.loc 1 45 1 view .LVU22
- 111 001c 02B0     		add	sp, sp, #8
- 112              	.LCFI1:
- 113              		.cfi_def_cfa_offset 0
- 114              		@ sp needed
- 115 001e 7047     		bx	lr
- 116              		.cfi_endproc
- 117              	.LFE1:
- 119              		.section	.text.setup_gpio,"ax",%progbits
- 120              		.align	1
- 121              		.global	setup_gpio
- 122              		.syntax unified
- 123              		.thumb
- 124              		.thumb_func
- 126              	setup_gpio:
- 127              	.LFB2:
-  46:neural_main.c **** 
-  47:neural_main.c **** // GPIO setup
-  48:neural_main.c **** void setup_gpio() {
- 128              		.loc 1 48 19 is_stmt 1 view -0
-ARM GAS  /tmp/cco4vhKm.s 			page 4
+  86 0000 084A     		ldr	r2, .L6
+  87 0002 D2F83038 		ldr	r3, [r2, #2096]
+  88              		.loc 1 32 43 is_stmt 0 view .LVU13
+  89 0006 43F00103 		orr	r3, r3, #1
+  90 000a C2F83038 		str	r3, [r2, #2096]
+  33:neural_main.c ****     
+  34:neural_main.c ****     // Configure PA5 as output
+  35:neural_main.c ****     volatile unsigned int *moder = (volatile unsigned int*)0x40020000;
+  91              		.loc 1 35 5 is_stmt 1 view .LVU14
+  92              	.LVL1:
+  36:neural_main.c ****     *moder &= ~(0x3 << 10);  // Clear bits
+  93              		.loc 1 36 5 view .LVU15
+  94 000e 064B     		ldr	r3, .L6+4
+  95 0010 1A68     		ldr	r2, [r3]
+  96              		.loc 1 36 12 is_stmt 0 view .LVU16
+  97 0012 22F44062 		bic	r2, r2, #3072
+  98 0016 1A60     		str	r2, [r3]
+  37:neural_main.c ****     *moder |= (0x1 << 10);   // Set as output
+  99              		.loc 1 37 5 is_stmt 1 view .LVU17
+ 100 0018 1A68     		ldr	r2, [r3]
+ 101              		.loc 1 37 12 is_stmt 0 view .LVU18
+ 102 001a 42F48062 		orr	r2, r2, #1024
+ 103 001e 1A60     		str	r2, [r3]
+  38:neural_main.c **** }
+ 104              		.loc 1 38 1 view .LVU19
+ 105 0020 7047     		bx	lr
+ 106              	.L7:
+ 107 0022 00BF     		.align	2
+ 108              	.L6:
+ 109 0024 00300240 		.word	1073885184
+ 110 0028 00000240 		.word	1073872896
+ 111              		.cfi_endproc
+ 112              	.LFE1:
+ 114              		.section	.text.led_on,"ax",%progbits
+ 115              		.align	1
+ 116              		.global	led_on
+ 117              		.syntax unified
+ 118              		.thumb
+ 119              		.thumb_func
+ 121              	led_on:
+ 122              	.LFB2:
+  39:neural_main.c **** 
+  40:neural_main.c **** // LED control
+  41:neural_main.c **** void led_on() {
+ 123              		.loc 1 41 15 is_stmt 1 view -0
+ 124              		.cfi_startproc
+ 125              		@ args = 0, pretend = 0, frame = 0
+ 126              		@ frame_needed = 0, uses_anonymous_args = 0
+ 127              		@ link register save eliminated.
+  42:neural_main.c ****     *((volatile unsigned int*)0x40020018) = (1 << 5);
+ 128              		.loc 1 42 5 view .LVU21
+ 129              		.loc 1 42 43 is_stmt 0 view .LVU22
+ 130 0000 014B     		ldr	r3, .L9
+ 131 0002 2022     		movs	r2, #32
+ 132 0004 9A61     		str	r2, [r3, #24]
+  43:neural_main.c **** }
+ 133              		.loc 1 43 1 view .LVU23
+ARM GAS  /tmp/cch6bb4i.s 			page 4
 
 
- 129              		.cfi_startproc
- 130              		@ args = 0, pretend = 0, frame = 0
- 131              		@ frame_needed = 0, uses_anonymous_args = 0
- 132              		@ link register save eliminated.
-  49:neural_main.c ****     // Enable GPIOA clock
-  50:neural_main.c ****     *((volatile unsigned int*)0x40023830) |= 0x00000001;
- 133              		.loc 1 50 5 view .LVU24
- 134 0000 084A     		ldr	r2, .L10
- 135 0002 D2F83038 		ldr	r3, [r2, #2096]
- 136              		.loc 1 50 43 is_stmt 0 view .LVU25
- 137 0006 43F00103 		orr	r3, r3, #1
- 138 000a C2F83038 		str	r3, [r2, #2096]
-  51:neural_main.c ****     
-  52:neural_main.c ****     // Configure PA5 as output (LED)
-  53:neural_main.c ****     volatile unsigned int *moder = (volatile unsigned int*)0x40020000;
- 139              		.loc 1 53 5 is_stmt 1 view .LVU26
- 140              	.LVL1:
-  54:neural_main.c ****     *moder &= ~(0x3 << 10);  // Clear bits
- 141              		.loc 1 54 5 view .LVU27
- 142 000e 064B     		ldr	r3, .L10+4
- 143 0010 1A68     		ldr	r2, [r3]
- 144              		.loc 1 54 12 is_stmt 0 view .LVU28
- 145 0012 22F44062 		bic	r2, r2, #3072
- 146 0016 1A60     		str	r2, [r3]
-  55:neural_main.c ****     *moder |= (0x1 << 10);   // Set as output
- 147              		.loc 1 55 5 is_stmt 1 view .LVU29
- 148 0018 1A68     		ldr	r2, [r3]
- 149              		.loc 1 55 12 is_stmt 0 view .LVU30
- 150 001a 42F48062 		orr	r2, r2, #1024
- 151 001e 1A60     		str	r2, [r3]
+ 134 0006 7047     		bx	lr
+ 135              	.L10:
+ 136              		.align	2
+ 137              	.L9:
+ 138 0008 00000240 		.word	1073872896
+ 139              		.cfi_endproc
+ 140              	.LFE2:
+ 142              		.section	.text.led_off,"ax",%progbits
+ 143              		.align	1
+ 144              		.global	led_off
+ 145              		.syntax unified
+ 146              		.thumb
+ 147              		.thumb_func
+ 149              	led_off:
+ 150              	.LFB3:
+  44:neural_main.c **** 
+  45:neural_main.c **** void led_off() {
+ 151              		.loc 1 45 16 is_stmt 1 view -0
+ 152              		.cfi_startproc
+ 153              		@ args = 0, pretend = 0, frame = 0
+ 154              		@ frame_needed = 0, uses_anonymous_args = 0
+ 155              		@ link register save eliminated.
+  46:neural_main.c ****     *((volatile unsigned int*)0x40020018) = (1 << 21);
+ 156              		.loc 1 46 5 view .LVU25
+ 157              		.loc 1 46 43 is_stmt 0 view .LVU26
+ 158 0000 024B     		ldr	r3, .L12
+ 159 0002 4FF40012 		mov	r2, #2097152
+ 160 0006 9A61     		str	r2, [r3, #24]
+  47:neural_main.c **** }
+ 161              		.loc 1 47 1 view .LVU27
+ 162 0008 7047     		bx	lr
+ 163              	.L13:
+ 164 000a 00BF     		.align	2
+ 165              	.L12:
+ 166 000c 00000240 		.word	1073872896
+ 167              		.cfi_endproc
+ 168              	.LFE3:
+ 170              		.section	.text.led_blink,"ax",%progbits
+ 171              		.align	1
+ 172              		.global	led_blink
+ 173              		.syntax unified
+ 174              		.thumb
+ 175              		.thumb_func
+ 177              	led_blink:
+ 178              	.LVL2:
+ 179              	.LFB4:
+  48:neural_main.c **** 
+  49:neural_main.c **** void led_blink(int count) {
+ 180              		.loc 1 49 27 is_stmt 1 view -0
+ 181              		.cfi_startproc
+ 182              		@ args = 0, pretend = 0, frame = 0
+ 183              		@ frame_needed = 0, uses_anonymous_args = 0
+ 184              		.loc 1 49 27 is_stmt 0 view .LVU29
+ 185 0000 38B5     		push	{r3, r4, r5, lr}
+ 186              	.LCFI2:
+ 187              		.cfi_def_cfa_offset 16
+ 188              		.cfi_offset 3, -16
+ARM GAS  /tmp/cch6bb4i.s 			page 5
+
+
+ 189              		.cfi_offset 4, -12
+ 190              		.cfi_offset 5, -8
+ 191              		.cfi_offset 14, -4
+ 192 0002 0546     		mov	r5, r0
+  50:neural_main.c ****     for(int i = 0; i < count; i++) {
+ 193              		.loc 1 50 5 is_stmt 1 view .LVU30
+ 194              	.LBB3:
+ 195              		.loc 1 50 9 view .LVU31
+ 196              	.LVL3:
+ 197              		.loc 1 50 13 is_stmt 0 view .LVU32
+ 198 0004 0024     		movs	r4, #0
+ 199              		.loc 1 50 5 view .LVU33
+ 200 0006 0CE0     		b	.L15
+ 201              	.LVL4:
+ 202              	.L16:
+  51:neural_main.c ****         led_on();
+ 203              		.loc 1 51 9 is_stmt 1 view .LVU34
+ 204 0008 FFF7FEFF 		bl	led_on
+ 205              	.LVL5:
+  52:neural_main.c ****         delay_ms(300);
+ 206              		.loc 1 52 9 view .LVU35
+ 207 000c 4FF49670 		mov	r0, #300
+ 208 0010 FFF7FEFF 		bl	delay_ms
+ 209              	.LVL6:
+  53:neural_main.c ****         led_off();
+ 210              		.loc 1 53 9 view .LVU36
+ 211 0014 FFF7FEFF 		bl	led_off
+ 212              	.LVL7:
+  54:neural_main.c ****         delay_ms(300);
+ 213              		.loc 1 54 9 view .LVU37
+ 214 0018 4FF49670 		mov	r0, #300
+ 215 001c FFF7FEFF 		bl	delay_ms
+ 216              	.LVL8:
+  50:neural_main.c ****         led_on();
+ 217              		.loc 1 50 32 discriminator 3 view .LVU38
+ 218 0020 0134     		adds	r4, r4, #1
+ 219              	.LVL9:
+ 220              	.L15:
+  50:neural_main.c ****         led_on();
+ 221              		.loc 1 50 22 discriminator 1 view .LVU39
+ 222 0022 AC42     		cmp	r4, r5
+ 223 0024 F0DB     		blt	.L16
+ 224              	.LBE3:
+  55:neural_main.c ****     }
   56:neural_main.c **** }
- 152              		.loc 1 56 1 view .LVU31
- 153 0020 7047     		bx	lr
- 154              	.L11:
- 155 0022 00BF     		.align	2
- 156              	.L10:
- 157 0024 00300240 		.word	1073885184
- 158 0028 00000240 		.word	1073872896
- 159              		.cfi_endproc
- 160              	.LFE2:
- 162              		.section	.text.setup_uart,"ax",%progbits
- 163              		.align	1
- 164              		.global	setup_uart
- 165              		.syntax unified
- 166              		.thumb
- 167              		.thumb_func
- 169              	setup_uart:
- 170              	.LFB3:
-  57:neural_main.c **** 
-  58:neural_main.c **** // UART setup (USART2 on PA2/PA3)
-  59:neural_main.c **** void setup_uart() {
- 171              		.loc 1 59 19 is_stmt 1 view -0
- 172              		.cfi_startproc
- 173              		@ args = 0, pretend = 0, frame = 0
- 174              		@ frame_needed = 0, uses_anonymous_args = 0
- 175              		@ link register save eliminated.
-  60:neural_main.c ****     // Enable GPIOA and USART2 clocks
-ARM GAS  /tmp/cco4vhKm.s 			page 5
-
-
-  61:neural_main.c ****     *((volatile unsigned int*)0x40023830) |= 0x00000001;  // GPIOA
- 176              		.loc 1 61 5 view .LVU33
- 177 0000 144B     		ldr	r3, .L13
- 178 0002 D3F83028 		ldr	r2, [r3, #2096]
- 179              		.loc 1 61 43 is_stmt 0 view .LVU34
- 180 0006 42F00102 		orr	r2, r2, #1
- 181 000a C3F83028 		str	r2, [r3, #2096]
-  62:neural_main.c ****     *((volatile unsigned int*)0x40023840) |= 0x00020000;  // USART2
- 182              		.loc 1 62 5 is_stmt 1 view .LVU35
- 183 000e D3F84028 		ldr	r2, [r3, #2112]
- 184              		.loc 1 62 43 is_stmt 0 view .LVU36
- 185 0012 42F40032 		orr	r2, r2, #131072
- 186 0016 C3F84028 		str	r2, [r3, #2112]
-  63:neural_main.c ****     
-  64:neural_main.c ****     // Configure PA2 (TX) and PA3 (RX) as alternate function
-  65:neural_main.c ****     volatile unsigned int *gpioa_moder = (volatile unsigned int*)0x40020000;
- 187              		.loc 1 65 5 is_stmt 1 view .LVU37
- 188              	.LVL2:
-  66:neural_main.c ****     volatile unsigned int *gpioa_afrl = (volatile unsigned int*)0x40020020;
- 189              		.loc 1 66 5 view .LVU38
-  67:neural_main.c ****     
-  68:neural_main.c ****     // PA2 and PA3 as alternate function
-  69:neural_main.c ****     *gpioa_moder &= ~((0x3 << 4) | (0x3 << 6));
- 190              		.loc 1 69 5 view .LVU39
- 191 001a A3F54053 		sub	r3, r3, #12288
- 192 001e 1A68     		ldr	r2, [r3]
- 193              		.loc 1 69 18 is_stmt 0 view .LVU40
- 194 0020 22F0F002 		bic	r2, r2, #240
- 195 0024 1A60     		str	r2, [r3]
-  70:neural_main.c ****     *gpioa_moder |= ((0x2 << 4) | (0x2 << 6));
- 196              		.loc 1 70 5 is_stmt 1 view .LVU41
- 197 0026 1A68     		ldr	r2, [r3]
- 198              		.loc 1 70 18 is_stmt 0 view .LVU42
- 199 0028 42F0A002 		orr	r2, r2, #160
- 200 002c 1A60     		str	r2, [r3]
-  71:neural_main.c ****     
-  72:neural_main.c ****     // Set alternate function 7 (USART2) for PA2 and PA3
-  73:neural_main.c ****     *gpioa_afrl &= ~((0xF << 8) | (0xF << 12));
- 201              		.loc 1 73 5 is_stmt 1 view .LVU43
- 202 002e 1A6A     		ldr	r2, [r3, #32]
- 203              		.loc 1 73 17 is_stmt 0 view .LVU44
- 204 0030 22F47F42 		bic	r2, r2, #65280
- 205 0034 1A62     		str	r2, [r3, #32]
-  74:neural_main.c ****     *gpioa_afrl |= ((0x7 << 8) | (0x7 << 12));
- 206              		.loc 1 74 5 is_stmt 1 view .LVU45
- 207 0036 1A6A     		ldr	r2, [r3, #32]
- 208              		.loc 1 74 17 is_stmt 0 view .LVU46
- 209 0038 42F4EE42 		orr	r2, r2, #30464
- 210 003c 1A62     		str	r2, [r3, #32]
-  75:neural_main.c ****     
-  76:neural_main.c ****     // Configure USART2
-  77:neural_main.c ****     volatile unsigned int *usart2_base = (volatile unsigned int*)0x40004400;
- 211              		.loc 1 77 5 is_stmt 1 view .LVU47
- 212              	.LVL3:
-  78:neural_main.c ****     
-  79:neural_main.c ****     // Set baud rate (115200 @ 16MHz): BRR = 16MHz / 115200 = 138.89 ≈ 139
-  80:neural_main.c ****     *(usart2_base + 0x08/4) = 139;  // USART_BRR
-ARM GAS  /tmp/cco4vhKm.s 			page 6
-
-
- 213              		.loc 1 80 5 view .LVU48
- 214              		.loc 1 80 29 is_stmt 0 view .LVU49
- 215 003e 4FF04023 		mov	r3, #1073758208
- 216 0042 8B22     		movs	r2, #139
- 217 0044 C3F80824 		str	r2, [r3, #1032]
-  81:neural_main.c ****     
-  82:neural_main.c ****     // Enable USART2: UE + TE + RE
-  83:neural_main.c ****     *(usart2_base + 0x0C/4) = 0x0000200C;  // USART_CR1
- 218              		.loc 1 83 5 is_stmt 1 view .LVU50
- 219              		.loc 1 83 29 is_stmt 0 view .LVU51
- 220 0048 42F20C02 		movw	r2, #8204
- 221 004c C3F80C24 		str	r2, [r3, #1036]
-  84:neural_main.c **** }
- 222              		.loc 1 84 1 view .LVU52
- 223 0050 7047     		bx	lr
- 224              	.L14:
- 225 0052 00BF     		.align	2
- 226              	.L13:
- 227 0054 00300240 		.word	1073885184
+ 225              		.loc 1 56 1 is_stmt 0 view .LVU40
+ 226 0026 38BD     		pop	{r3, r4, r5, pc}
+ 227              		.loc 1 56 1 view .LVU41
  228              		.cfi_endproc
- 229              	.LFE3:
- 231              		.section	.text.uart_send_char,"ax",%progbits
+ 229              	.LFE4:
+ 231              		.section	.text.main_program,"ax",%progbits
  232              		.align	1
- 233              		.global	uart_send_char
+ 233              		.global	main_program
  234              		.syntax unified
  235              		.thumb
  236              		.thumb_func
- 238              	uart_send_char:
- 239              	.LFB4:
-  85:neural_main.c **** 
-  86:neural_main.c **** // UART functions
-  87:neural_main.c **** void uart_send_char(char c) {
- 240              		.loc 1 87 29 is_stmt 1 view -0
+ 238              	main_program:
+ARM GAS  /tmp/cch6bb4i.s 			page 6
+
+
+ 239              	.LFB5:
+  57:neural_main.c **** 
+  58:neural_main.c **** // Main program
+  59:neural_main.c **** void main_program() {
+ 240              		.loc 1 59 21 is_stmt 1 view -0
  241              		.cfi_startproc
  242              		@ args = 0, pretend = 0, frame = 0
  243              		@ frame_needed = 0, uses_anonymous_args = 0
- 244              		@ link register save eliminated.
- 245              	.LVL4:
- 246              	.L16:
-  88:neural_main.c ****     volatile unsigned int *usart2_sr = (volatile unsigned int*)0x40004400;
-  89:neural_main.c ****     volatile unsigned int *usart2_dr = (volatile unsigned int*)0x40004404;
-  90:neural_main.c ****     
-  91:neural_main.c ****     // Wait for TXE (transmit empty)
-  92:neural_main.c ****     while(!(*usart2_sr & 0x80));
- 247              		.loc 1 92 11 discriminator 1 view .LVU54
- 248              		.loc 1 92 13 is_stmt 0 discriminator 1 view .LVU55
- 249 0000 4FF04023 		mov	r3, #1073758208
- 250 0004 D3F80034 		ldr	r3, [r3, #1024]
- 251              		.loc 1 92 11 discriminator 1 view .LVU56
- 252 0008 13F0800F 		tst	r3, #128
- 253 000c F8D0     		beq	.L16
-  93:neural_main.c ****     
-  94:neural_main.c ****     // Send character
-  95:neural_main.c ****     *usart2_dr = c;
- 254              		.loc 1 95 5 is_stmt 1 view .LVU57
- 255              		.loc 1 95 16 is_stmt 0 view .LVU58
- 256 000e 4FF04023 		mov	r3, #1073758208
-ARM GAS  /tmp/cco4vhKm.s 			page 7
+ 244 0000 10B5     		push	{r4, lr}
+ 245              	.LCFI3:
+ 246              		.cfi_def_cfa_offset 8
+ 247              		.cfi_offset 4, -8
+ 248              		.cfi_offset 14, -4
+  60:neural_main.c ****     setup_gpio();
+ 249              		.loc 1 60 5 view .LVU43
+ 250 0002 FFF7FEFF 		bl	setup_gpio
+ 251              	.LVL10:
+  61:neural_main.c ****     
+  62:neural_main.c ****     // Startup sequence - 3 fast blinks
+  63:neural_main.c ****     for(int i = 0; i < 3; i++) {
+ 252              		.loc 1 63 5 view .LVU44
+ 253              	.LBB4:
+ 254              		.loc 1 63 9 view .LVU45
+ 255              		.loc 1 63 13 is_stmt 0 view .LVU46
+ 256 0006 0024     		movs	r4, #0
+ 257              		.loc 1 63 5 view .LVU47
+ 258 0008 0AE0     		b	.L19
+ 259              	.LVL11:
+ 260              	.L20:
+  64:neural_main.c ****         led_on();
+ 261              		.loc 1 64 9 is_stmt 1 view .LVU48
+ 262 000a FFF7FEFF 		bl	led_on
+ 263              	.LVL12:
+  65:neural_main.c ****         delay_ms(100);
+ 264              		.loc 1 65 9 view .LVU49
+ 265 000e 6420     		movs	r0, #100
+ 266 0010 FFF7FEFF 		bl	delay_ms
+ 267              	.LVL13:
+  66:neural_main.c ****         led_off();
+ 268              		.loc 1 66 9 view .LVU50
+ 269 0014 FFF7FEFF 		bl	led_off
+ 270              	.LVL14:
+  67:neural_main.c ****         delay_ms(100);
+ 271              		.loc 1 67 9 view .LVU51
+ 272 0018 6420     		movs	r0, #100
+ 273 001a FFF7FEFF 		bl	delay_ms
+ 274              	.LVL15:
+  63:neural_main.c ****         led_on();
+ 275              		.loc 1 63 28 discriminator 3 view .LVU52
+ 276 001e 0134     		adds	r4, r4, #1
+ 277              	.LVL16:
+ 278              	.L19:
+  63:neural_main.c ****         led_on();
+ 279              		.loc 1 63 22 discriminator 1 view .LVU53
+ 280 0020 022C     		cmp	r4, #2
+ 281 0022 F2DD     		ble	.L20
+ 282              	.LBE4:
+ARM GAS  /tmp/cch6bb4i.s 			page 7
 
 
- 257 0012 C3F80404 		str	r0, [r3, #1028]
-  96:neural_main.c **** }
- 258              		.loc 1 96 1 view .LVU59
- 259 0016 7047     		bx	lr
- 260              		.cfi_endproc
- 261              	.LFE4:
- 263              		.section	.text.uart_send_string,"ax",%progbits
- 264              		.align	1
- 265              		.global	uart_send_string
- 266              		.syntax unified
- 267              		.thumb
- 268              		.thumb_func
- 270              	uart_send_string:
- 271              	.LVL5:
- 272              	.LFB5:
-  97:neural_main.c **** 
-  98:neural_main.c **** void uart_send_string(const char* str) {
- 273              		.loc 1 98 40 is_stmt 1 view -0
- 274              		.cfi_startproc
- 275              		@ args = 0, pretend = 0, frame = 0
- 276              		@ frame_needed = 0, uses_anonymous_args = 0
- 277              		.loc 1 98 40 is_stmt 0 view .LVU61
- 278 0000 10B5     		push	{r4, lr}
- 279              	.LCFI2:
- 280              		.cfi_def_cfa_offset 8
- 281              		.cfi_offset 4, -8
- 282              		.cfi_offset 14, -4
- 283 0002 0446     		mov	r4, r0
-  99:neural_main.c ****     while(*str) {
- 284              		.loc 1 99 5 is_stmt 1 view .LVU62
- 285              		.loc 1 99 10 is_stmt 0 view .LVU63
- 286 0004 02E0     		b	.L18
- 287              	.LVL6:
- 288              	.L19:
- 100:neural_main.c ****         uart_send_char(*str++);
- 289              		.loc 1 100 9 is_stmt 1 view .LVU64
- 290              		.loc 1 100 28 is_stmt 0 view .LVU65
- 291 0006 0134     		adds	r4, r4, #1
- 292              	.LVL7:
- 293              		.loc 1 100 9 view .LVU66
- 294 0008 FFF7FEFF 		bl	uart_send_char
- 295              	.LVL8:
- 296              	.L18:
-  99:neural_main.c ****     while(*str) {
- 297              		.loc 1 99 11 is_stmt 1 view .LVU67
- 298 000c 2078     		ldrb	r0, [r4]	@ zero_extendqisi2
- 299 000e 0028     		cmp	r0, #0
- 300 0010 F9D1     		bne	.L19
- 101:neural_main.c ****     }
- 102:neural_main.c **** }
- 301              		.loc 1 102 1 is_stmt 0 view .LVU68
- 302 0012 10BD     		pop	{r4, pc}
- 303              		.loc 1 102 1 view .LVU69
- 304              		.cfi_endproc
- 305              	.LFE5:
- 307              		.section	.text.uart_send_number,"ax",%progbits
- 308              		.align	1
-ARM GAS  /tmp/cco4vhKm.s 			page 8
+  68:neural_main.c ****     }
+  69:neural_main.c ****     
+  70:neural_main.c ****     delay_ms(1000);  // Pause
+ 283              		.loc 1 70 5 view .LVU54
+ 284 0024 4FF47A70 		mov	r0, #1000
+ 285 0028 FFF7FEFF 		bl	delay_ms
+ 286              	.LVL17:
+ 287 002c 07E0     		b	.L22
+ 288              	.LVL18:
+ 289              	.L23:
+ 290              	.LBB5:
+  71:neural_main.c ****     
+  72:neural_main.c ****     // Main loop
+  73:neural_main.c ****     while(1) {
+  74:neural_main.c ****         // Run neural network inference
+  75:neural_main.c ****         int prediction = predict(test_digit, 28, 28, 1);
+  76:neural_main.c ****         
+  77:neural_main.c ****         // Ensure valid range
+  78:neural_main.c ****         if(prediction < 0) prediction = 0;
+ 291              		.loc 1 78 39 is_stmt 0 discriminator 1 view .LVU55
+ 292 002e 0020     		movs	r0, #0
+ 293              	.LVL19:
+ 294              	.L21:
+  79:neural_main.c ****         if(prediction > 9) prediction = 9;
+  80:neural_main.c ****         
+  81:neural_main.c ****         // Blink LED: prediction + 1 times
+  82:neural_main.c ****         led_blink(prediction + 1);
+ 295              		.loc 1 82 9 is_stmt 1 view .LVU56
+ 296 0030 0130     		adds	r0, r0, #1
+ 297              	.LVL20:
+ 298              		.loc 1 82 9 is_stmt 0 view .LVU57
+ 299 0032 FFF7FEFF 		bl	led_blink
+ 300              	.LVL21:
+  83:neural_main.c ****         
+  84:neural_main.c ****         // Long pause before next prediction
+  85:neural_main.c ****         delay_ms(3000);
+ 301              		.loc 1 85 9 is_stmt 1 view .LVU58
+ 302 0036 40F6B830 		movw	r0, #3000
+ 303 003a FFF7FEFF 		bl	delay_ms
+ 304              	.LVL22:
+ 305              	.LBE5:
+  73:neural_main.c ****         // Run neural network inference
+ 306              		.loc 1 73 10 view .LVU59
+ 307              	.L22:
+  73:neural_main.c ****         // Run neural network inference
+ 308              		.loc 1 73 5 view .LVU60
+ 309              	.LBB6:
+  75:neural_main.c ****         
+ 310              		.loc 1 75 9 view .LVU61
+  75:neural_main.c ****         
+ 311              		.loc 1 75 26 is_stmt 0 view .LVU62
+ 312 003e 0123     		movs	r3, #1
+ 313 0040 1C22     		movs	r2, #28
+ 314 0042 1146     		mov	r1, r2
+ 315 0044 0448     		ldr	r0, .L26
+ 316 0046 FFF7FEFF 		bl	predict
+ 317              	.LVL23:
+ARM GAS  /tmp/cch6bb4i.s 			page 8
 
 
- 309              		.global	uart_send_number
- 310              		.syntax unified
- 311              		.thumb
- 312              		.thumb_func
- 314              	uart_send_number:
- 315              	.LVL9:
- 316              	.LFB6:
- 103:neural_main.c **** 
- 104:neural_main.c **** void uart_send_number(int num) {
- 317              		.loc 1 104 32 is_stmt 1 view -0
- 318              		.cfi_startproc
- 319              		@ args = 0, pretend = 0, frame = 16
- 320              		@ frame_needed = 0, uses_anonymous_args = 0
- 321              		.loc 1 104 32 is_stmt 0 view .LVU71
- 322 0000 30B5     		push	{r4, r5, lr}
- 323              	.LCFI3:
- 324              		.cfi_def_cfa_offset 12
- 325              		.cfi_offset 4, -12
- 326              		.cfi_offset 5, -8
- 327              		.cfi_offset 14, -4
- 328 0002 85B0     		sub	sp, sp, #20
- 329              	.LCFI4:
- 330              		.cfi_def_cfa_offset 32
- 105:neural_main.c ****     char buffer[12];
- 331              		.loc 1 105 5 is_stmt 1 view .LVU72
- 106:neural_main.c ****     int i = 0;
- 332              		.loc 1 106 5 view .LVU73
- 333              	.LVL10:
- 107:neural_main.c ****     
- 108:neural_main.c ****     if(num == 0) {
- 334              		.loc 1 108 5 view .LVU74
- 335              		.loc 1 108 7 is_stmt 0 view .LVU75
- 336 0004 20B1     		cbz	r0, .L30
- 337 0006 0546     		mov	r5, r0
- 109:neural_main.c ****         uart_send_char('0');
- 110:neural_main.c ****         return;
- 111:neural_main.c ****     }
- 112:neural_main.c ****     
- 113:neural_main.c ****     if(num < 0) {
- 338              		.loc 1 113 5 is_stmt 1 view .LVU76
- 339              		.loc 1 113 7 is_stmt 0 view .LVU77
- 340 0008 0028     		cmp	r0, #0
- 341 000a 05DB     		blt	.L31
- 342              	.LVL11:
- 343              	.L24:
- 104:neural_main.c ****     char buffer[12];
- 344              		.loc 1 104 32 view .LVU78
- 345 000c 0024     		movs	r4, #0
- 346 000e 1BE0     		b	.L25
- 347              	.LVL12:
- 348              	.L30:
- 109:neural_main.c ****         uart_send_char('0');
- 349              		.loc 1 109 9 is_stmt 1 view .LVU79
- 350 0010 3020     		movs	r0, #48
- 351              	.LVL13:
- 109:neural_main.c ****         uart_send_char('0');
- 352              		.loc 1 109 9 is_stmt 0 view .LVU80
-ARM GAS  /tmp/cco4vhKm.s 			page 9
+  78:neural_main.c ****         if(prediction > 9) prediction = 9;
+ 318              		.loc 1 78 9 is_stmt 1 view .LVU63
+  78:neural_main.c ****         if(prediction > 9) prediction = 9;
+ 319              		.loc 1 78 11 is_stmt 0 view .LVU64
+ 320 004a 0028     		cmp	r0, #0
+  78:neural_main.c ****         if(prediction > 9) prediction = 9;
+ 321              		.loc 1 78 11 view .LVU65
+ 322 004c EFDB     		blt	.L23
+  79:neural_main.c ****         
+ 323              		.loc 1 79 9 is_stmt 1 view .LVU66
+  79:neural_main.c ****         
+ 324              		.loc 1 79 11 is_stmt 0 view .LVU67
+ 325 004e 0928     		cmp	r0, #9
+ 326 0050 EEDD     		ble	.L21
+  79:neural_main.c ****         
+ 327              		.loc 1 79 39 discriminator 1 view .LVU68
+ 328 0052 0920     		movs	r0, #9
+ 329              	.LVL24:
+  79:neural_main.c ****         
+ 330              		.loc 1 79 39 discriminator 1 view .LVU69
+ 331 0054 ECE7     		b	.L21
+ 332              	.L27:
+ 333 0056 00BF     		.align	2
+ 334              	.L26:
+ 335 0058 00000000 		.word	test_digit
+ 336              	.LBE6:
+ 337              		.cfi_endproc
+ 338              	.LFE5:
+ 340              		.section	.text.Reset_Handler,"ax",%progbits
+ 341              		.align	1
+ 342              		.global	Reset_Handler
+ 343              		.syntax unified
+ 344              		.thumb
+ 345              		.thumb_func
+ 347              	Reset_Handler:
+ 348              	.LFB6:
+  86:neural_main.c ****     }
+  87:neural_main.c **** }
+  88:neural_main.c **** 
+  89:neural_main.c **** // Reset handler
+  90:neural_main.c **** __attribute__((naked))
+  91:neural_main.c **** void Reset_Handler() {
+ 349              		.loc 1 91 22 is_stmt 1 view -0
+ 350              		.cfi_startproc
+ 351              		@ Naked Function: prologue and epilogue provided by programmer.
+ 352              		@ args = 0, pretend = 0, frame = 0
+ 353              		@ frame_needed = 0, uses_anonymous_args = 0
+  92:neural_main.c ****     // Basic startup (minimal for this demo)
+  93:neural_main.c ****     main_program();
+ 354              		.loc 1 93 5 view .LVU71
+ 355 0000 FFF7FEFF 		bl	main_program
+ 356              	.LVL25:
+ 357              		.cfi_endproc
+ 358              	.LFE6:
+ 360              		.global	vector_table
+ 361              		.section	.isr_vector,"aw"
+ 362              		.align	2
+ARM GAS  /tmp/cch6bb4i.s 			page 9
 
 
- 353 0012 FFF7FEFF 		bl	uart_send_char
- 354              	.LVL14:
- 110:neural_main.c ****     }
- 355              		.loc 1 110 9 is_stmt 1 view .LVU81
- 356 0016 24E0     		b	.L21
- 357              	.LVL15:
- 358              	.L31:
- 114:neural_main.c ****         uart_send_char('-');
- 359              		.loc 1 114 9 view .LVU82
- 360 0018 2D20     		movs	r0, #45
- 361              	.LVL16:
- 362              		.loc 1 114 9 is_stmt 0 view .LVU83
- 363 001a FFF7FEFF 		bl	uart_send_char
- 364              	.LVL17:
- 115:neural_main.c ****         num = -num;
- 365              		.loc 1 115 9 is_stmt 1 view .LVU84
- 366              		.loc 1 115 13 is_stmt 0 view .LVU85
- 367 001e 6D42     		rsbs	r5, r5, #0
- 368              	.LVL18:
- 369              		.loc 1 115 13 view .LVU86
- 370 0020 F4E7     		b	.L24
- 371              	.LVL19:
- 372              	.L26:
- 116:neural_main.c ****     }
- 117:neural_main.c ****     
- 118:neural_main.c ****     // Convert to string (reverse)
- 119:neural_main.c ****     while(num > 0) {
- 120:neural_main.c ****         buffer[i++] = '0' + (num % 10);
- 373              		.loc 1 120 9 is_stmt 1 view .LVU87
- 374              		.loc 1 120 34 is_stmt 0 view .LVU88
- 375 0022 114A     		ldr	r2, .L32
- 376 0024 82FB0532 		smull	r3, r2, r2, r5
- 377 0028 EB17     		asrs	r3, r5, #31
- 378 002a C3EBA203 		rsb	r3, r3, r2, asr #2
- 379 002e 1A46     		mov	r2, r3
- 380 0030 03EB8303 		add	r3, r3, r3, lsl #2
- 381 0034 A5EB4303 		sub	r3, r5, r3, lsl #1
- 382              	.LVL20:
- 383              		.loc 1 120 27 view .LVU89
- 384 0038 3033     		adds	r3, r3, #48
- 385              		.loc 1 120 21 view .LVU90
- 386 003a 04F11001 		add	r1, r4, #16
- 387 003e 6944     		add	r1, sp, r1
- 388 0040 01F80C3C 		strb	r3, [r1, #-12]
- 121:neural_main.c ****         num /= 10;
- 389              		.loc 1 121 9 is_stmt 1 view .LVU91
- 390              		.loc 1 121 13 is_stmt 0 view .LVU92
- 391 0044 1546     		mov	r5, r2
- 392              	.LVL21:
- 120:neural_main.c ****         num /= 10;
- 393              		.loc 1 120 17 view .LVU93
- 394 0046 0134     		adds	r4, r4, #1
- 395              	.LVL22:
- 396              	.L25:
- 119:neural_main.c ****         buffer[i++] = '0' + (num % 10);
- 397              		.loc 1 119 15 is_stmt 1 view .LVU94
- 398 0048 002D     		cmp	r5, #0
-ARM GAS  /tmp/cco4vhKm.s 			page 10
+ 365              	vector_table:
+ 366 0000 00000220 		.word	537001984
+ 367 0004 00000000 		.word	Reset_Handler
+ 368              		.section	.rodata.test_digit,"a"
+ 369              		.align	2
+ 372              	test_digit:
+ 373 0000 00000000 		.word	0
+ 374 0004 00000000 		.word	0
+ 375 0008 00000000 		.word	0
+ 376 000c 00000000 		.word	0
+ 377 0010 00000000 		.word	0
+ 378 0014 00000000 		.word	0
+ 379 0018 00000000 		.word	0
+ 380 001c 00000000 		.word	0
+ 381 0020 00000000 		.word	0
+ 382 0024 00000000 		.word	0
+ 383 0028 00000000 		.word	0
+ 384 002c 00000000 		.word	0
+ 385 0030 00000000 		.word	0
+ 386 0034 00000000 		.word	0
+ 387 0038 00000000 		.word	0
+ 388 003c 00000000 		.word	0
+ 389 0040 00000000 		.word	0
+ 390 0044 00000000 		.word	0
+ 391 0048 00000000 		.word	0
+ 392 004c 00000000 		.word	0
+ 393 0050 00000000 		.word	0
+ 394 0054 00000000 		.word	0
+ 395 0058 00000000 		.word	0
+ 396 005c 00000000 		.word	0
+ 397 0060 00000000 		.word	0
+ 398 0064 00000000 		.word	0
+ 399 0068 00000000 		.word	0
+ 400 006c 00000000 		.word	0
+ 401 0070 00000000 		.word	0
+ 402 0074 00000000 		.word	0
+ 403 0078 00000000 		.word	0
+ 404 007c 00000000 		.word	0
+ 405 0080 00000000 		.word	0
+ 406 0084 00000000 		.word	0
+ 407 0088 00000000 		.word	0
+ 408 008c 00000000 		.word	0
+ 409 0090 00000000 		.word	0
+ 410 0094 00000000 		.word	0
+ 411 0098 00000000 		.word	0
+ 412 009c 00000000 		.word	0
+ 413 00a0 00000000 		.word	0
+ 414 00a4 00000000 		.word	0
+ 415 00a8 00000000 		.word	0
+ 416 00ac 00000000 		.word	0
+ 417 00b0 00000000 		.word	0
+ 418 00b4 00000000 		.word	0
+ 419 00b8 00000000 		.word	0
+ 420 00bc 00000000 		.word	0
+ 421 00c0 00000000 		.word	0
+ 422 00c4 00000000 		.word	0
+ 423 00c8 00000000 		.word	0
+ARM GAS  /tmp/cch6bb4i.s 			page 10
 
 
- 399 004a EADC     		bgt	.L26
- 400 004c 07E0     		b	.L27
- 401              	.L28:
- 122:neural_main.c ****     }
- 123:neural_main.c ****     
- 124:neural_main.c ****     // Send in correct order
- 125:neural_main.c ****     while(i > 0) {
- 126:neural_main.c ****         uart_send_char(buffer[--i]);
- 402              		.loc 1 126 9 view .LVU95
- 403 004e 013C     		subs	r4, r4, #1
- 404              	.LVL23:
- 405              		.loc 1 126 9 is_stmt 0 view .LVU96
- 406 0050 04F11003 		add	r3, r4, #16
- 407 0054 6B44     		add	r3, sp, r3
- 408 0056 13F80C0C 		ldrb	r0, [r3, #-12]	@ zero_extendqisi2
- 409 005a FFF7FEFF 		bl	uart_send_char
- 410              	.LVL24:
- 411              	.L27:
- 125:neural_main.c ****         uart_send_char(buffer[--i]);
- 412              		.loc 1 125 13 is_stmt 1 view .LVU97
- 413 005e 002C     		cmp	r4, #0
- 414 0060 F5DC     		bgt	.L28
- 415              	.LVL25:
- 416              	.L21:
- 127:neural_main.c ****     }
- 128:neural_main.c **** }
- 417              		.loc 1 128 1 is_stmt 0 view .LVU98
- 418 0062 05B0     		add	sp, sp, #20
- 419              	.LCFI5:
- 420              		.cfi_def_cfa_offset 12
- 421              		@ sp needed
- 422 0064 30BD     		pop	{r4, r5, pc}
- 423              	.L33:
- 424 0066 00BF     		.align	2
- 425              	.L32:
- 426 0068 67666666 		.word	1717986919
- 427              		.cfi_endproc
- 428              	.LFE6:
- 430              		.section	.rodata.check_stack_usage.str1.4,"aMS",%progbits,1
- 431              		.align	2
- 432              	.LC0:
- 433 0000 53746163 		.ascii	"Stack used: \000"
- 433      6B207573 
- 433      65643A20 
- 433      00
- 434 000d 000000   		.align	2
- 435              	.LC1:
- 436 0010 20627974 		.ascii	" bytes\015\012\000"
- 436      65730D0A 
- 436      00
- 437              		.section	.text.check_stack_usage,"ax",%progbits
- 438              		.align	1
- 439              		.global	check_stack_usage
- 440              		.syntax unified
- 441              		.thumb
- 442              		.thumb_func
- 444              	check_stack_usage:
-ARM GAS  /tmp/cco4vhKm.s 			page 11
+ 424 00cc 00000000 		.word	0
+ 425 00d0 00000000 		.word	0
+ 426 00d4 00000000 		.word	0
+ 427 00d8 00000000 		.word	0
+ 428 00dc 00000000 		.word	0
+ 429 00e0 00000000 		.word	0
+ 430 00e4 00000000 		.word	0
+ 431 00e8 00000000 		.word	0
+ 432 00ec 00000000 		.word	0
+ 433 00f0 00000000 		.word	0
+ 434 00f4 00000000 		.word	0
+ 435 00f8 00000000 		.word	0
+ 436 00fc 00000000 		.word	0
+ 437 0100 00000000 		.word	0
+ 438 0104 00000000 		.word	0
+ 439 0108 00000000 		.word	0
+ 440 010c 00000000 		.word	0
+ 441 0110 00000000 		.word	0
+ 442 0114 00000000 		.word	0
+ 443 0118 00000000 		.word	0
+ 444 011c 00000000 		.word	0
+ 445 0120 00000000 		.word	0
+ 446 0124 00000000 		.word	0
+ 447 0128 00000000 		.word	0
+ 448 012c 00000000 		.word	0
+ 449 0130 00000000 		.word	0
+ 450 0134 00000000 		.word	0
+ 451 0138 00000000 		.word	0
+ 452 013c 00000000 		.word	0
+ 453 0140 00000000 		.word	0
+ 454 0144 00000000 		.word	0
+ 455 0148 00000000 		.word	0
+ 456 014c 00000000 		.word	0
+ 457 0150 00000000 		.word	0
+ 458 0154 00000000 		.word	0
+ 459 0158 00000000 		.word	0
+ 460 015c 00000000 		.word	0
+ 461 0160 00000000 		.word	0
+ 462 0164 00000000 		.word	0
+ 463 0168 00000000 		.word	0
+ 464 016c 00000000 		.word	0
+ 465 0170 00000000 		.word	0
+ 466 0174 00000000 		.word	0
+ 467 0178 00000000 		.word	0
+ 468 017c 00000000 		.word	0
+ 469 0180 00000000 		.word	0
+ 470 0184 00000000 		.word	0
+ 471 0188 00000000 		.word	0
+ 472 018c 00000000 		.word	0
+ 473 0190 CDCC4C3F 		.word	1061997773
+ 474 0194 6666663F 		.word	1063675494
+ 475 0198 CDCC4C3F 		.word	1061997773
+ 476 019c 00000000 		.word	0
+ 477 01a0 00000000 		.word	0
+ 478 01a4 00000000 		.word	0
+ 479 01a8 00000000 		.word	0
+ 480 01ac 00000000 		.word	0
+ARM GAS  /tmp/cch6bb4i.s 			page 11
 
 
- 445              	.LFB7:
- 129:neural_main.c **** 
- 130:neural_main.c **** // Simple stack usage checker
- 131:neural_main.c **** void check_stack_usage(void) {
- 446              		.loc 1 131 30 is_stmt 1 view -0
- 447              		.cfi_startproc
- 448              		@ args = 0, pretend = 0, frame = 0
- 449              		@ frame_needed = 0, uses_anonymous_args = 0
- 450 0000 10B5     		push	{r4, lr}
- 451              	.LCFI6:
- 452              		.cfi_def_cfa_offset 8
- 453              		.cfi_offset 4, -8
- 454              		.cfi_offset 14, -4
- 132:neural_main.c ****     register void* sp asm("sp");
- 455              		.loc 1 132 5 view .LVU100
- 133:neural_main.c ****     unsigned int stack_used = 0x20010000 - (unsigned int)sp;
- 456              		.loc 1 133 5 view .LVU101
- 457              		.loc 1 133 18 is_stmt 0 view .LVU102
- 458 0002 6B46     		mov	r3, sp
- 459 0004 C3F10054 		rsb	r4, r3, #536870912
- 460 0008 04F58034 		add	r4, r4, #65536
- 461              	.LVL26:
- 134:neural_main.c ****     uart_send_string("Stack used: ");
- 462              		.loc 1 134 5 is_stmt 1 view .LVU103
- 463 000c 0448     		ldr	r0, .L36
- 464 000e FFF7FEFF 		bl	uart_send_string
- 465              	.LVL27:
- 135:neural_main.c ****     uart_send_number(stack_used);
- 466              		.loc 1 135 5 view .LVU104
- 467 0012 2046     		mov	r0, r4
- 468 0014 FFF7FEFF 		bl	uart_send_number
- 469              	.LVL28:
- 136:neural_main.c ****     uart_send_string(" bytes\r\n");
- 470              		.loc 1 136 5 view .LVU105
- 471 0018 0248     		ldr	r0, .L36+4
- 472 001a FFF7FEFF 		bl	uart_send_string
- 473              	.LVL29:
- 137:neural_main.c **** }
- 474              		.loc 1 137 1 is_stmt 0 view .LVU106
- 475 001e 10BD     		pop	{r4, pc}
- 476              	.LVL30:
- 477              	.L37:
- 478              		.loc 1 137 1 view .LVU107
- 479              		.align	2
- 480              	.L36:
- 481 0020 00000000 		.word	.LC0
- 482 0024 10000000 		.word	.LC1
- 483              		.cfi_endproc
- 484              	.LFE7:
- 486              		.section	.text.led_on,"ax",%progbits
- 487              		.align	1
- 488              		.global	led_on
- 489              		.syntax unified
- 490              		.thumb
- 491              		.thumb_func
- 493              	led_on:
- 494              	.LFB8:
-ARM GAS  /tmp/cco4vhKm.s 			page 12
+ 481 01b0 00000000 		.word	0
+ 482 01b4 00000000 		.word	0
+ 483 01b8 00000000 		.word	0
+ 484 01bc 00000000 		.word	0
+ 485 01c0 00000000 		.word	0
+ 486 01c4 00000000 		.word	0
+ 487 01c8 00000000 		.word	0
+ 488 01cc 00000000 		.word	0
+ 489 01d0 00000000 		.word	0
+ 490 01d4 00000000 		.word	0
+ 491 01d8 00000000 		.word	0
+ 492 01dc 00000000 		.word	0
+ 493 01e0 00000000 		.word	0
+ 494 01e4 00000000 		.word	0
+ 495 01e8 00000000 		.word	0
+ 496 01ec 00000000 		.word	0
+ 497 01f0 00000000 		.word	0
+ 498 01f4 00000000 		.word	0
+ 499 01f8 00000000 		.word	0
+ 500 01fc 00000000 		.word	0
+ 501 0200 3333333F 		.word	1060320051
+ 502 0204 6666663F 		.word	1063675494
+ 503 0208 3333333F 		.word	1060320051
+ 504 020c 00000000 		.word	0
+ 505 0210 00000000 		.word	0
+ 506 0214 00000000 		.word	0
+ 507 0218 00000000 		.word	0
+ 508 021c 00000000 		.word	0
+ 509 0220 00000000 		.word	0
+ 510 0224 00000000 		.word	0
+ 511 0228 00000000 		.word	0
+ 512 022c 00000000 		.word	0
+ 513 0230 00000000 		.word	0
+ 514 0234 00000000 		.word	0
+ 515 0238 00000000 		.word	0
+ 516 023c 00000000 		.word	0
+ 517 0240 00000000 		.word	0
+ 518 0244 00000000 		.word	0
+ 519 0248 00000000 		.word	0
+ 520 024c 00000000 		.word	0
+ 521 0250 00000000 		.word	0
+ 522 0254 00000000 		.word	0
+ 523 0258 00000000 		.word	0
+ 524 025c 00000000 		.word	0
+ 525 0260 00000000 		.word	0
+ 526 0264 00000000 		.word	0
+ 527 0268 00000000 		.word	0
+ 528 026c 00000000 		.word	0
+ 529 0270 00000000 		.word	0
+ 530 0274 00000000 		.word	0
+ 531 0278 00000000 		.word	0
+ 532 027c 00000000 		.word	0
+ 533 0280 00000000 		.word	0
+ 534 0284 00000000 		.word	0
+ 535 0288 00000000 		.word	0
+ 536 028c 00000000 		.word	0
+ 537 0290 00000000 		.word	0
+ARM GAS  /tmp/cch6bb4i.s 			page 12
 
 
- 138:neural_main.c **** 
- 139:neural_main.c **** // LED control
- 140:neural_main.c **** void led_on() {
- 495              		.loc 1 140 15 is_stmt 1 view -0
- 496              		.cfi_startproc
- 497              		@ args = 0, pretend = 0, frame = 0
- 498              		@ frame_needed = 0, uses_anonymous_args = 0
- 499              		@ link register save eliminated.
- 141:neural_main.c ****     *((volatile unsigned int*)0x40020018) = (1 << 5);
- 500              		.loc 1 141 5 view .LVU109
- 501              		.loc 1 141 43 is_stmt 0 view .LVU110
- 502 0000 014B     		ldr	r3, .L39
- 503 0002 2022     		movs	r2, #32
- 504 0004 9A61     		str	r2, [r3, #24]
- 142:neural_main.c **** }
- 505              		.loc 1 142 1 view .LVU111
- 506 0006 7047     		bx	lr
- 507              	.L40:
- 508              		.align	2
- 509              	.L39:
- 510 0008 00000240 		.word	1073872896
- 511              		.cfi_endproc
- 512              	.LFE8:
- 514              		.section	.text.led_off,"ax",%progbits
- 515              		.align	1
- 516              		.global	led_off
- 517              		.syntax unified
- 518              		.thumb
- 519              		.thumb_func
- 521              	led_off:
- 522              	.LFB9:
- 143:neural_main.c **** 
- 144:neural_main.c **** void led_off() {
- 523              		.loc 1 144 16 is_stmt 1 view -0
- 524              		.cfi_startproc
- 525              		@ args = 0, pretend = 0, frame = 0
- 526              		@ frame_needed = 0, uses_anonymous_args = 0
- 527              		@ link register save eliminated.
- 145:neural_main.c ****     *((volatile unsigned int*)0x40020018) = (1 << 21);
- 528              		.loc 1 145 5 view .LVU113
- 529              		.loc 1 145 43 is_stmt 0 view .LVU114
- 530 0000 024B     		ldr	r3, .L42
- 531 0002 4FF40012 		mov	r2, #2097152
- 532 0006 9A61     		str	r2, [r3, #24]
- 146:neural_main.c **** }
- 533              		.loc 1 146 1 view .LVU115
- 534 0008 7047     		bx	lr
- 535              	.L43:
- 536 000a 00BF     		.align	2
- 537              	.L42:
- 538 000c 00000240 		.word	1073872896
- 539              		.cfi_endproc
- 540              	.LFE9:
- 542              		.section	.text.led_blink,"ax",%progbits
- 543              		.align	1
- 544              		.global	led_blink
- 545              		.syntax unified
-ARM GAS  /tmp/cco4vhKm.s 			page 13
+ 538 0294 00000000 		.word	0
+ 539 0298 00000000 		.word	0
+ 540 029c 00000000 		.word	0
+ 541 02a0 00000000 		.word	0
+ 542 02a4 00000000 		.word	0
+ 543 02a8 00000000 		.word	0
+ 544 02ac 00000000 		.word	0
+ 545 02b0 00000000 		.word	0
+ 546 02b4 00000000 		.word	0
+ 547 02b8 00000000 		.word	0
+ 548 02bc 00000000 		.word	0
+ 549 02c0 00000000 		.word	0
+ 550 02c4 00000000 		.word	0
+ 551 02c8 00000000 		.word	0
+ 552 02cc 00000000 		.word	0
+ 553 02d0 00000000 		.word	0
+ 554 02d4 00000000 		.word	0
+ 555 02d8 00000000 		.word	0
+ 556 02dc 00000000 		.word	0
+ 557 02e0 00000000 		.word	0
+ 558 02e4 00000000 		.word	0
+ 559 02e8 00000000 		.word	0
+ 560 02ec 00000000 		.word	0
+ 561 02f0 00000000 		.word	0
+ 562 02f4 00000000 		.word	0
+ 563 02f8 00000000 		.word	0
+ 564 02fc 00000000 		.word	0
+ 565 0300 00000000 		.word	0
+ 566 0304 00000000 		.word	0
+ 567 0308 00000000 		.word	0
+ 568 030c 00000000 		.word	0
+ 569 0310 00000000 		.word	0
+ 570 0314 00000000 		.word	0
+ 571 0318 00000000 		.word	0
+ 572 031c 00000000 		.word	0
+ 573 0320 00000000 		.word	0
+ 574 0324 00000000 		.word	0
+ 575 0328 00000000 		.word	0
+ 576 032c 00000000 		.word	0
+ 577 0330 00000000 		.word	0
+ 578 0334 00000000 		.word	0
+ 579 0338 00000000 		.word	0
+ 580 033c 00000000 		.word	0
+ 581 0340 00000000 		.word	0
+ 582 0344 00000000 		.word	0
+ 583 0348 00000000 		.word	0
+ 584 034c 00000000 		.word	0
+ 585 0350 00000000 		.word	0
+ 586 0354 00000000 		.word	0
+ 587 0358 00000000 		.word	0
+ 588 035c 00000000 		.word	0
+ 589 0360 00000000 		.word	0
+ 590 0364 00000000 		.word	0
+ 591 0368 00000000 		.word	0
+ 592 036c 00000000 		.word	0
+ 593 0370 00000000 		.word	0
+ 594 0374 00000000 		.word	0
+ARM GAS  /tmp/cch6bb4i.s 			page 13
 
 
- 546              		.thumb
- 547              		.thumb_func
- 549              	led_blink:
- 550              	.LVL31:
- 551              	.LFB10:
- 147:neural_main.c **** 
- 148:neural_main.c **** void led_blink(int count) {
- 552              		.loc 1 148 27 is_stmt 1 view -0
- 553              		.cfi_startproc
- 554              		@ args = 0, pretend = 0, frame = 0
- 555              		@ frame_needed = 0, uses_anonymous_args = 0
- 556              		.loc 1 148 27 is_stmt 0 view .LVU117
- 557 0000 38B5     		push	{r3, r4, r5, lr}
- 558              	.LCFI7:
- 559              		.cfi_def_cfa_offset 16
- 560              		.cfi_offset 3, -16
- 561              		.cfi_offset 4, -12
- 562              		.cfi_offset 5, -8
- 563              		.cfi_offset 14, -4
- 564 0002 0546     		mov	r5, r0
- 149:neural_main.c ****     for(int i = 0; i < count; i++) {
- 565              		.loc 1 149 5 is_stmt 1 view .LVU118
- 566              	.LBB3:
- 567              		.loc 1 149 9 view .LVU119
- 568              	.LVL32:
- 569              		.loc 1 149 13 is_stmt 0 view .LVU120
- 570 0004 0024     		movs	r4, #0
- 571              		.loc 1 149 5 view .LVU121
- 572 0006 0CE0     		b	.L45
- 573              	.LVL33:
- 574              	.L46:
- 150:neural_main.c ****         led_on();
- 575              		.loc 1 150 9 is_stmt 1 view .LVU122
- 576 0008 FFF7FEFF 		bl	led_on
- 577              	.LVL34:
- 151:neural_main.c ****         delay_ms(300);
- 578              		.loc 1 151 9 view .LVU123
- 579 000c 4FF49670 		mov	r0, #300
- 580 0010 FFF7FEFF 		bl	delay_ms
- 581              	.LVL35:
- 152:neural_main.c ****         led_off();
- 582              		.loc 1 152 9 view .LVU124
- 583 0014 FFF7FEFF 		bl	led_off
- 584              	.LVL36:
- 153:neural_main.c ****         delay_ms(300);
- 585              		.loc 1 153 9 view .LVU125
- 586 0018 4FF49670 		mov	r0, #300
- 587 001c FFF7FEFF 		bl	delay_ms
- 588              	.LVL37:
- 149:neural_main.c ****         led_on();
- 589              		.loc 1 149 32 discriminator 3 view .LVU126
- 590 0020 0134     		adds	r4, r4, #1
- 591              	.LVL38:
- 592              	.L45:
- 149:neural_main.c ****         led_on();
- 593              		.loc 1 149 22 discriminator 1 view .LVU127
- 594 0022 AC42     		cmp	r4, r5
-ARM GAS  /tmp/cco4vhKm.s 			page 14
+ 595 0378 00000000 		.word	0
+ 596 037c 00000000 		.word	0
+ 597 0380 00000000 		.word	0
+ 598 0384 00000000 		.word	0
+ 599 0388 00000000 		.word	0
+ 600 038c 00000000 		.word	0
+ 601 0390 00000000 		.word	0
+ 602 0394 00000000 		.word	0
+ 603 0398 00000000 		.word	0
+ 604 039c 00000000 		.word	0
+ 605 03a0 00000000 		.word	0
+ 606 03a4 00000000 		.word	0
+ 607 03a8 00000000 		.word	0
+ 608 03ac 00000000 		.word	0
+ 609 03b0 00000000 		.word	0
+ 610 03b4 00000000 		.word	0
+ 611 03b8 00000000 		.word	0
+ 612 03bc 00000000 		.word	0
+ 613 03c0 00000000 		.word	0
+ 614 03c4 00000000 		.word	0
+ 615 03c8 00000000 		.word	0
+ 616 03cc 00000000 		.word	0
+ 617 03d0 00000000 		.word	0
+ 618 03d4 00000000 		.word	0
+ 619 03d8 00000000 		.word	0
+ 620 03dc 00000000 		.word	0
+ 621 03e0 00000000 		.word	0
+ 622 03e4 00000000 		.word	0
+ 623 03e8 00000000 		.word	0
+ 624 03ec 00000000 		.word	0
+ 625 03f0 00000000 		.word	0
+ 626 03f4 00000000 		.word	0
+ 627 03f8 00000000 		.word	0
+ 628 03fc 00000000 		.word	0
+ 629 0400 00000000 		.word	0
+ 630 0404 00000000 		.word	0
+ 631 0408 00000000 		.word	0
+ 632 040c 00000000 		.word	0
+ 633 0410 00000000 		.word	0
+ 634 0414 00000000 		.word	0
+ 635 0418 00000000 		.word	0
+ 636 041c 00000000 		.word	0
+ 637 0420 00000000 		.word	0
+ 638 0424 00000000 		.word	0
+ 639 0428 00000000 		.word	0
+ 640 042c 00000000 		.word	0
+ 641 0430 00000000 		.word	0
+ 642 0434 00000000 		.word	0
+ 643 0438 00000000 		.word	0
+ 644 043c 00000000 		.word	0
+ 645 0440 00000000 		.word	0
+ 646 0444 00000000 		.word	0
+ 647 0448 00000000 		.word	0
+ 648 044c 00000000 		.word	0
+ 649 0450 00000000 		.word	0
+ 650 0454 00000000 		.word	0
+ 651 0458 00000000 		.word	0
+ARM GAS  /tmp/cch6bb4i.s 			page 14
 
 
- 595 0024 F0DB     		blt	.L46
- 596              	.LBE3:
- 154:neural_main.c ****     }
- 155:neural_main.c **** }
- 597              		.loc 1 155 1 is_stmt 0 view .LVU128
- 598 0026 38BD     		pop	{r3, r4, r5, pc}
- 599              		.loc 1 155 1 view .LVU129
- 600              		.cfi_endproc
- 601              	.LFE10:
- 603              		.section	.rodata.main_program.str1.4,"aMS",%progbits,1
- 604              		.align	2
- 605              	.LC2:
- 606 0000 0D0A3D3D 		.ascii	"\015\012=== STM32 Neural Network Demo ===\015\012\000"
- 606      3D205354 
- 606      4D333220 
- 606      4E657572 
- 606      616C204E 
- 607 0026 0000     		.align	2
- 608              	.LC3:
- 609 0028 426F6172 		.ascii	"Board: STM32F446RE Nucleo\015\012\000"
- 609      643A2053 
- 609      544D3332 
- 609      46343436 
- 609      5245204E 
- 610              		.align	2
- 611              	.LC4:
- 612 0044 4D6F6465 		.ascii	"Model: MNIST Digit Recognition\015\012\000"
- 612      6C3A204D 
- 612      4E495354 
- 612      20446967 
- 612      69742052 
- 613 0065 000000   		.align	2
- 614              	.LC5:
- 615 0068 55415254 		.ascii	"UART: 115200 baud\015\012\015\012\000"
- 615      3A203131 
- 615      35323030 
- 615      20626175 
- 615      640D0A0D 
- 616 007e 0000     		.align	2
- 617              	.LC6:
- 618 0080 496E6974 		.ascii	"Initializing LED...\015\012\000"
- 618      69616C69 
- 618      7A696E67 
- 618      204C4544 
- 618      2E2E2E0D 
- 619 0096 0000     		.align	2
- 620              	.LC7:
- 621 0098 53746172 		.ascii	"Starting neural network inference...\015\012\015\012"
- 621      74696E67 
- 621      206E6575 
- 621      72616C20 
- 621      6E657477 
- 622 00c0 00       		.ascii	"\000"
- 623 00c1 000000   		.align	2
- 624              	.LC8:
- 625 00c4 2D2D2D20 		.ascii	"--- Iteration \000"
- 625      49746572 
-ARM GAS  /tmp/cco4vhKm.s 			page 15
+ 652 045c 00000000 		.word	0
+ 653 0460 00000000 		.word	0
+ 654 0464 00000000 		.word	0
+ 655 0468 00000000 		.word	0
+ 656 046c 00000000 		.word	0
+ 657 0470 00000000 		.word	0
+ 658 0474 00000000 		.word	0
+ 659 0478 00000000 		.word	0
+ 660 047c 00000000 		.word	0
+ 661 0480 00000000 		.word	0
+ 662 0484 00000000 		.word	0
+ 663 0488 00000000 		.word	0
+ 664 048c 00000000 		.word	0
+ 665 0490 00000000 		.word	0
+ 666 0494 00000000 		.word	0
+ 667 0498 00000000 		.word	0
+ 668 049c 00000000 		.word	0
+ 669 04a0 00000000 		.word	0
+ 670 04a4 00000000 		.word	0
+ 671 04a8 00000000 		.word	0
+ 672 04ac 00000000 		.word	0
+ 673 04b0 00000000 		.word	0
+ 674 04b4 00000000 		.word	0
+ 675 04b8 00000000 		.word	0
+ 676 04bc 00000000 		.word	0
+ 677 04c0 00000000 		.word	0
+ 678 04c4 00000000 		.word	0
+ 679 04c8 00000000 		.word	0
+ 680 04cc 00000000 		.word	0
+ 681 04d0 00000000 		.word	0
+ 682 04d4 00000000 		.word	0
+ 683 04d8 00000000 		.word	0
+ 684 04dc 00000000 		.word	0
+ 685 04e0 00000000 		.word	0
+ 686 04e4 00000000 		.word	0
+ 687 04e8 00000000 		.word	0
+ 688 04ec 00000000 		.word	0
+ 689 04f0 00000000 		.word	0
+ 690 04f4 00000000 		.word	0
+ 691 04f8 00000000 		.word	0
+ 692 04fc 00000000 		.word	0
+ 693 0500 00000000 		.word	0
+ 694 0504 00000000 		.word	0
+ 695 0508 00000000 		.word	0
+ 696 050c 00000000 		.word	0
+ 697 0510 00000000 		.word	0
+ 698 0514 00000000 		.word	0
+ 699 0518 00000000 		.word	0
+ 700 051c 00000000 		.word	0
+ 701 0520 00000000 		.word	0
+ 702 0524 00000000 		.word	0
+ 703 0528 00000000 		.word	0
+ 704 052c 00000000 		.word	0
+ 705 0530 00000000 		.word	0
+ 706 0534 00000000 		.word	0
+ 707 0538 00000000 		.word	0
+ 708 053c 00000000 		.word	0
+ARM GAS  /tmp/cch6bb4i.s 			page 15
 
 
- 625      6174696F 
- 625      6E2000
- 626 00d3 00       		.align	2
- 627              	.LC9:
- 628 00d4 202D2D2D 		.ascii	" ---\015\012\000"
- 628      0D0A00
- 629 00db 00       		.align	2
- 630              	.LC10:
- 631 00dc 52756E6E 		.ascii	"Running inference...\015\012\000"
- 631      696E6720 
- 631      696E6665 
- 631      72656E63 
- 631      652E2E2E 
- 632 00f3 00       		.align	2
- 633              	.LC11:
- 634 00f4 50726564 		.ascii	"Predicted digit: \000"
- 634      69637465 
- 634      64206469 
- 634      6769743A 
- 634      2000
- 635 0106 0000     		.align	2
- 636              	.LC12:
- 637 0108 0D0A00   		.ascii	"\015\012\000"
- 638 010b 00       		.align	2
- 639              	.LC13:
- 640 010c 4C454420 		.ascii	"LED blinks: \000"
- 640      626C696E 
- 640      6B733A20 
- 640      00
- 641 0119 000000   		.align	2
- 642              	.LC14:
- 643 011c 2074696D 		.ascii	" times\015\012\015\012\000"
- 643      65730D0A 
- 643      0D0A00
- 644 0127 00       		.align	2
- 645              	.LC15:
- 646 0128 57616974 		.ascii	"Waiting 5 seconds...\015\012\015\012\000"
- 646      696E6720 
- 646      35207365 
- 646      636F6E64 
- 646      732E2E2E 
- 647              		.section	.text.main_program,"ax",%progbits
- 648              		.align	1
- 649              		.global	main_program
- 650              		.syntax unified
- 651              		.thumb
- 652              		.thumb_func
- 654              	main_program:
- 655              	.LFB11:
- 156:neural_main.c **** 
- 157:neural_main.c **** // Main program
- 158:neural_main.c **** void main_program() {
- 656              		.loc 1 158 21 is_stmt 1 view -0
- 657              		.cfi_startproc
- 658              		@ args = 0, pretend = 0, frame = 0
- 659              		@ frame_needed = 0, uses_anonymous_args = 0
- 660 0000 38B5     		push	{r3, r4, r5, lr}
-ARM GAS  /tmp/cco4vhKm.s 			page 16
+ 709 0540 00000000 		.word	0
+ 710 0544 00000000 		.word	0
+ 711 0548 00000000 		.word	0
+ 712 054c 00000000 		.word	0
+ 713 0550 00000000 		.word	0
+ 714 0554 00000000 		.word	0
+ 715 0558 00000000 		.word	0
+ 716 055c 00000000 		.word	0
+ 717 0560 00000000 		.word	0
+ 718 0564 00000000 		.word	0
+ 719 0568 00000000 		.word	0
+ 720 056c 00000000 		.word	0
+ 721 0570 00000000 		.word	0
+ 722 0574 00000000 		.word	0
+ 723 0578 00000000 		.word	0
+ 724 057c 00000000 		.word	0
+ 725 0580 00000000 		.word	0
+ 726 0584 00000000 		.word	0
+ 727 0588 00000000 		.word	0
+ 728 058c 00000000 		.word	0
+ 729 0590 00000000 		.word	0
+ 730 0594 00000000 		.word	0
+ 731 0598 00000000 		.word	0
+ 732 059c 00000000 		.word	0
+ 733 05a0 00000000 		.word	0
+ 734 05a4 00000000 		.word	0
+ 735 05a8 00000000 		.word	0
+ 736 05ac 00000000 		.word	0
+ 737 05b0 00000000 		.word	0
+ 738 05b4 00000000 		.word	0
+ 739 05b8 00000000 		.word	0
+ 740 05bc 00000000 		.word	0
+ 741 05c0 00000000 		.word	0
+ 742 05c4 00000000 		.word	0
+ 743 05c8 00000000 		.word	0
+ 744 05cc 00000000 		.word	0
+ 745 05d0 00000000 		.word	0
+ 746 05d4 00000000 		.word	0
+ 747 05d8 00000000 		.word	0
+ 748 05dc 00000000 		.word	0
+ 749 05e0 00000000 		.word	0
+ 750 05e4 00000000 		.word	0
+ 751 05e8 00000000 		.word	0
+ 752 05ec 00000000 		.word	0
+ 753 05f0 00000000 		.word	0
+ 754 05f4 00000000 		.word	0
+ 755 05f8 00000000 		.word	0
+ 756 05fc 00000000 		.word	0
+ 757 0600 00000000 		.word	0
+ 758 0604 00000000 		.word	0
+ 759 0608 00000000 		.word	0
+ 760 060c 00000000 		.word	0
+ 761 0610 00000000 		.word	0
+ 762 0614 00000000 		.word	0
+ 763 0618 00000000 		.word	0
+ 764 061c 00000000 		.word	0
+ 765 0620 00000000 		.word	0
+ARM GAS  /tmp/cch6bb4i.s 			page 16
 
 
- 661              	.LCFI8:
- 662              		.cfi_def_cfa_offset 16
- 663              		.cfi_offset 3, -16
- 664              		.cfi_offset 4, -12
- 665              		.cfi_offset 5, -8
- 666              		.cfi_offset 14, -4
- 159:neural_main.c ****     setup_system_clock();
- 667              		.loc 1 159 5 view .LVU131
- 668 0002 FFF7FEFF 		bl	setup_system_clock
- 669              	.LVL39:
- 160:neural_main.c ****     setup_gpio();
- 670              		.loc 1 160 5 view .LVU132
- 671 0006 FFF7FEFF 		bl	setup_gpio
- 672              	.LVL40:
- 161:neural_main.c ****     setup_uart();
- 673              		.loc 1 161 5 view .LVU133
- 674 000a FFF7FEFF 		bl	setup_uart
- 675              	.LVL41:
- 162:neural_main.c ****     
- 163:neural_main.c ****     // Send startup message
- 164:neural_main.c ****     uart_send_string("\r\n=== STM32 Neural Network Demo ===\r\n");
- 676              		.loc 1 164 5 view .LVU134
- 677 000e 3048     		ldr	r0, .L56
- 678 0010 FFF7FEFF 		bl	uart_send_string
- 679              	.LVL42:
- 165:neural_main.c ****     uart_send_string("Board: STM32F446RE Nucleo\r\n");
- 680              		.loc 1 165 5 view .LVU135
- 681 0014 2F48     		ldr	r0, .L56+4
- 682 0016 FFF7FEFF 		bl	uart_send_string
- 683              	.LVL43:
- 166:neural_main.c ****     uart_send_string("Model: MNIST Digit Recognition\r\n");
- 684              		.loc 1 166 5 view .LVU136
- 685 001a 2F48     		ldr	r0, .L56+8
- 686 001c FFF7FEFF 		bl	uart_send_string
- 687              	.LVL44:
- 167:neural_main.c ****     uart_send_string("UART: 115200 baud\r\n\r\n");
- 688              		.loc 1 167 5 view .LVU137
- 689 0020 2E48     		ldr	r0, .L56+12
- 690 0022 FFF7FEFF 		bl	uart_send_string
- 691              	.LVL45:
- 168:neural_main.c ****     
- 169:neural_main.c ****     // Startup sequence - 3 fast blinks
- 170:neural_main.c ****     uart_send_string("Initializing LED...\r\n");
- 692              		.loc 1 170 5 view .LVU138
- 693 0026 2E48     		ldr	r0, .L56+16
- 694 0028 FFF7FEFF 		bl	uart_send_string
- 695              	.LVL46:
- 171:neural_main.c ****     for(int i = 0; i < 3; i++) {
- 696              		.loc 1 171 5 view .LVU139
- 697              	.LBB4:
- 698              		.loc 1 171 9 view .LVU140
- 699              		.loc 1 171 13 is_stmt 0 view .LVU141
- 700 002c 0024     		movs	r4, #0
- 701              		.loc 1 171 5 view .LVU142
- 702 002e 0AE0     		b	.L49
- 703              	.LVL47:
- 704              	.L50:
-ARM GAS  /tmp/cco4vhKm.s 			page 17
+ 766 0624 00000000 		.word	0
+ 767 0628 00000000 		.word	0
+ 768 062c 00000000 		.word	0
+ 769 0630 00000000 		.word	0
+ 770 0634 00000000 		.word	0
+ 771 0638 00000000 		.word	0
+ 772 063c 00000000 		.word	0
+ 773 0640 00000000 		.word	0
+ 774 0644 00000000 		.word	0
+ 775 0648 00000000 		.word	0
+ 776 064c 00000000 		.word	0
+ 777 0650 00000000 		.word	0
+ 778 0654 00000000 		.word	0
+ 779 0658 00000000 		.word	0
+ 780 065c 00000000 		.word	0
+ 781 0660 00000000 		.word	0
+ 782 0664 00000000 		.word	0
+ 783 0668 00000000 		.word	0
+ 784 066c 00000000 		.word	0
+ 785 0670 00000000 		.word	0
+ 786 0674 00000000 		.word	0
+ 787 0678 00000000 		.word	0
+ 788 067c 00000000 		.word	0
+ 789 0680 00000000 		.word	0
+ 790 0684 00000000 		.word	0
+ 791 0688 00000000 		.word	0
+ 792 068c 00000000 		.word	0
+ 793 0690 00000000 		.word	0
+ 794 0694 00000000 		.word	0
+ 795 0698 00000000 		.word	0
+ 796 069c 00000000 		.word	0
+ 797 06a0 00000000 		.word	0
+ 798 06a4 00000000 		.word	0
+ 799 06a8 00000000 		.word	0
+ 800 06ac 00000000 		.word	0
+ 801 06b0 00000000 		.word	0
+ 802 06b4 00000000 		.word	0
+ 803 06b8 00000000 		.word	0
+ 804 06bc 00000000 		.word	0
+ 805 06c0 00000000 		.word	0
+ 806 06c4 00000000 		.word	0
+ 807 06c8 00000000 		.word	0
+ 808 06cc 00000000 		.word	0
+ 809 06d0 00000000 		.word	0
+ 810 06d4 00000000 		.word	0
+ 811 06d8 00000000 		.word	0
+ 812 06dc 00000000 		.word	0
+ 813 06e0 00000000 		.word	0
+ 814 06e4 00000000 		.word	0
+ 815 06e8 00000000 		.word	0
+ 816 06ec 00000000 		.word	0
+ 817 06f0 00000000 		.word	0
+ 818 06f4 00000000 		.word	0
+ 819 06f8 00000000 		.word	0
+ 820 06fc 00000000 		.word	0
+ 821 0700 00000000 		.word	0
+ 822 0704 00000000 		.word	0
+ARM GAS  /tmp/cch6bb4i.s 			page 17
 
 
- 172:neural_main.c ****         led_on();
- 705              		.loc 1 172 9 is_stmt 1 view .LVU143
- 706 0030 FFF7FEFF 		bl	led_on
- 707              	.LVL48:
- 173:neural_main.c ****         delay_ms(100);
- 708              		.loc 1 173 9 view .LVU144
- 709 0034 6420     		movs	r0, #100
- 710 0036 FFF7FEFF 		bl	delay_ms
- 711              	.LVL49:
- 174:neural_main.c ****         led_off();
- 712              		.loc 1 174 9 view .LVU145
- 713 003a FFF7FEFF 		bl	led_off
- 714              	.LVL50:
- 175:neural_main.c ****         delay_ms(100);
- 715              		.loc 1 175 9 view .LVU146
- 716 003e 6420     		movs	r0, #100
- 717 0040 FFF7FEFF 		bl	delay_ms
- 718              	.LVL51:
- 171:neural_main.c ****         led_on();
- 719              		.loc 1 171 28 discriminator 3 view .LVU147
- 720 0044 0134     		adds	r4, r4, #1
- 721              	.LVL52:
- 722              	.L49:
- 171:neural_main.c ****         led_on();
- 723              		.loc 1 171 22 discriminator 1 view .LVU148
- 724 0046 022C     		cmp	r4, #2
- 725 0048 F2DD     		ble	.L50
- 726              	.LBE4:
- 176:neural_main.c ****     }
- 177:neural_main.c ****     
- 178:neural_main.c ****     uart_send_string("Starting neural network inference...\r\n\r\n");
- 727              		.loc 1 178 5 view .LVU149
- 728 004a 2648     		ldr	r0, .L56+20
- 729 004c FFF7FEFF 		bl	uart_send_string
- 730              	.LVL53:
- 179:neural_main.c ****     delay_ms(1000);  // Pause
- 731              		.loc 1 179 5 view .LVU150
- 732 0050 4FF47A70 		mov	r0, #1000
- 733 0054 FFF7FEFF 		bl	delay_ms
- 734              	.LVL54:
- 180:neural_main.c ****     
- 181:neural_main.c ****     int iteration = 1;
- 735              		.loc 1 181 5 view .LVU151
- 736              		.loc 1 181 9 is_stmt 0 view .LVU152
- 737 0058 0124     		movs	r4, #1
- 738              	.LVL55:
- 739              		.loc 1 181 9 view .LVU153
- 740 005a 1EE0     		b	.L52
- 741              	.LVL56:
- 742              	.L53:
- 743              	.LBB5:
- 182:neural_main.c ****     
- 183:neural_main.c ****     // Main loop
- 184:neural_main.c ****     while(1) {
- 185:neural_main.c ****         uart_send_string("--- Iteration ");
- 186:neural_main.c ****         uart_send_number(iteration++);
- 187:neural_main.c ****         uart_send_string(" ---\r\n");
-ARM GAS  /tmp/cco4vhKm.s 			page 18
+ 823 0708 00000000 		.word	0
+ 824 070c 00000000 		.word	0
+ 825 0710 00000000 		.word	0
+ 826 0714 00000000 		.word	0
+ 827 0718 00000000 		.word	0
+ 828 071c 00000000 		.word	0
+ 829 0720 00000000 		.word	0
+ 830 0724 00000000 		.word	0
+ 831 0728 00000000 		.word	0
+ 832 072c 00000000 		.word	0
+ 833 0730 00000000 		.word	0
+ 834 0734 00000000 		.word	0
+ 835 0738 00000000 		.word	0
+ 836 073c 00000000 		.word	0
+ 837 0740 00000000 		.word	0
+ 838 0744 00000000 		.word	0
+ 839 0748 00000000 		.word	0
+ 840 074c 00000000 		.word	0
+ 841 0750 00000000 		.word	0
+ 842 0754 00000000 		.word	0
+ 843 0758 00000000 		.word	0
+ 844 075c 00000000 		.word	0
+ 845 0760 00000000 		.word	0
+ 846 0764 00000000 		.word	0
+ 847 0768 00000000 		.word	0
+ 848 076c 00000000 		.word	0
+ 849 0770 00000000 		.word	0
+ 850 0774 00000000 		.word	0
+ 851 0778 00000000 		.word	0
+ 852 077c 00000000 		.word	0
+ 853 0780 00000000 		.word	0
+ 854 0784 00000000 		.word	0
+ 855 0788 00000000 		.word	0
+ 856 078c 00000000 		.word	0
+ 857 0790 00000000 		.word	0
+ 858 0794 00000000 		.word	0
+ 859 0798 00000000 		.word	0
+ 860 079c 00000000 		.word	0
+ 861 07a0 00000000 		.word	0
+ 862 07a4 00000000 		.word	0
+ 863 07a8 00000000 		.word	0
+ 864 07ac 00000000 		.word	0
+ 865 07b0 00000000 		.word	0
+ 866 07b4 00000000 		.word	0
+ 867 07b8 00000000 		.word	0
+ 868 07bc 00000000 		.word	0
+ 869 07c0 00000000 		.word	0
+ 870 07c4 00000000 		.word	0
+ 871 07c8 00000000 		.word	0
+ 872 07cc 00000000 		.word	0
+ 873 07d0 00000000 		.word	0
+ 874 07d4 00000000 		.word	0
+ 875 07d8 00000000 		.word	0
+ 876 07dc 00000000 		.word	0
+ 877 07e0 00000000 		.word	0
+ 878 07e4 00000000 		.word	0
+ 879 07e8 00000000 		.word	0
+ARM GAS  /tmp/cch6bb4i.s 			page 18
 
 
- 188:neural_main.c ****         
- 189:neural_main.c ****         // Check stack usage
- 190:neural_main.c ****         check_stack_usage();
- 191:neural_main.c ****         
- 192:neural_main.c ****         // Run neural network inference
- 193:neural_main.c ****         uart_send_string("Running inference...\r\n");
- 194:neural_main.c ****         int prediction = predict(test_digit, 28, 28, 1);
- 195:neural_main.c ****         
- 196:neural_main.c ****         // Ensure valid range
- 197:neural_main.c ****         if(prediction < 0) prediction = 0;
- 744              		.loc 1 197 39 discriminator 1 view .LVU154
- 745 005c 0024     		movs	r4, #0
- 746              	.L51:
- 747              	.LVL57:
- 198:neural_main.c ****         if(prediction > 9) prediction = 9;
- 199:neural_main.c ****         
- 200:neural_main.c ****         uart_send_string("Predicted digit: ");
- 748              		.loc 1 200 9 is_stmt 1 view .LVU155
- 749 005e 2248     		ldr	r0, .L56+24
- 750 0060 FFF7FEFF 		bl	uart_send_string
- 751              	.LVL58:
- 201:neural_main.c ****         uart_send_number(prediction);
- 752              		.loc 1 201 9 view .LVU156
- 753 0064 2046     		mov	r0, r4
- 754 0066 FFF7FEFF 		bl	uart_send_number
- 755              	.LVL59:
- 202:neural_main.c ****         uart_send_string("\r\n");
- 756              		.loc 1 202 9 view .LVU157
- 757 006a 2048     		ldr	r0, .L56+28
- 758 006c FFF7FEFF 		bl	uart_send_string
- 759              	.LVL60:
- 203:neural_main.c ****         
- 204:neural_main.c ****         uart_send_string("LED blinks: ");
- 760              		.loc 1 204 9 view .LVU158
- 761 0070 1F48     		ldr	r0, .L56+32
- 762 0072 FFF7FEFF 		bl	uart_send_string
- 763              	.LVL61:
- 205:neural_main.c ****         uart_send_number(prediction + 1);
- 764              		.loc 1 205 9 view .LVU159
- 765 0076 0134     		adds	r4, r4, #1
- 766              	.LVL62:
- 767              		.loc 1 205 9 is_stmt 0 view .LVU160
- 768 0078 2046     		mov	r0, r4
- 769 007a FFF7FEFF 		bl	uart_send_number
- 770              	.LVL63:
- 206:neural_main.c ****         uart_send_string(" times\r\n\r\n");
- 771              		.loc 1 206 9 is_stmt 1 view .LVU161
- 772 007e 1D48     		ldr	r0, .L56+36
- 773 0080 FFF7FEFF 		bl	uart_send_string
- 774              	.LVL64:
- 207:neural_main.c ****         
- 208:neural_main.c ****         // Blink LED: prediction + 1 times
- 209:neural_main.c ****         led_blink(prediction + 1);
- 775              		.loc 1 209 9 view .LVU162
- 776 0084 2046     		mov	r0, r4
- 777 0086 FFF7FEFF 		bl	led_blink
- 778              	.LVL65:
-ARM GAS  /tmp/cco4vhKm.s 			page 19
+ 880 07ec 00000000 		.word	0
+ 881 07f0 00000000 		.word	0
+ 882 07f4 00000000 		.word	0
+ 883 07f8 00000000 		.word	0
+ 884 07fc 00000000 		.word	0
+ 885 0800 00000000 		.word	0
+ 886 0804 00000000 		.word	0
+ 887 0808 00000000 		.word	0
+ 888 080c 00000000 		.word	0
+ 889 0810 00000000 		.word	0
+ 890 0814 00000000 		.word	0
+ 891 0818 00000000 		.word	0
+ 892 081c 00000000 		.word	0
+ 893 0820 00000000 		.word	0
+ 894 0824 00000000 		.word	0
+ 895 0828 00000000 		.word	0
+ 896 082c 00000000 		.word	0
+ 897 0830 00000000 		.word	0
+ 898 0834 00000000 		.word	0
+ 899 0838 00000000 		.word	0
+ 900 083c 00000000 		.word	0
+ 901 0840 00000000 		.word	0
+ 902 0844 00000000 		.word	0
+ 903 0848 00000000 		.word	0
+ 904 084c 00000000 		.word	0
+ 905 0850 00000000 		.word	0
+ 906 0854 00000000 		.word	0
+ 907 0858 00000000 		.word	0
+ 908 085c 00000000 		.word	0
+ 909 0860 00000000 		.word	0
+ 910 0864 00000000 		.word	0
+ 911 0868 00000000 		.word	0
+ 912 086c 00000000 		.word	0
+ 913 0870 00000000 		.word	0
+ 914 0874 00000000 		.word	0
+ 915 0878 00000000 		.word	0
+ 916 087c 00000000 		.word	0
+ 917 0880 00000000 		.word	0
+ 918 0884 00000000 		.word	0
+ 919 0888 00000000 		.word	0
+ 920 088c 00000000 		.word	0
+ 921 0890 00000000 		.word	0
+ 922 0894 00000000 		.word	0
+ 923 0898 00000000 		.word	0
+ 924 089c 00000000 		.word	0
+ 925 08a0 00000000 		.word	0
+ 926 08a4 00000000 		.word	0
+ 927 08a8 00000000 		.word	0
+ 928 08ac 00000000 		.word	0
+ 929 08b0 00000000 		.word	0
+ 930 08b4 00000000 		.word	0
+ 931 08b8 00000000 		.word	0
+ 932 08bc 00000000 		.word	0
+ 933 08c0 00000000 		.word	0
+ 934 08c4 00000000 		.word	0
+ 935 08c8 00000000 		.word	0
+ 936 08cc 00000000 		.word	0
+ARM GAS  /tmp/cch6bb4i.s 			page 19
 
 
- 210:neural_main.c ****         
- 211:neural_main.c ****         // Long pause before next prediction
- 212:neural_main.c ****         uart_send_string("Waiting 5 seconds...\r\n\r\n");
- 779              		.loc 1 212 9 view .LVU163
- 780 008a 1B48     		ldr	r0, .L56+40
- 781 008c FFF7FEFF 		bl	uart_send_string
- 782              	.LVL66:
- 213:neural_main.c ****         delay_ms(5000);
- 783              		.loc 1 213 9 view .LVU164
- 784 0090 41F28830 		movw	r0, #5000
- 785 0094 FFF7FEFF 		bl	delay_ms
- 786              	.LVL67:
- 787              	.LBE5:
- 184:neural_main.c ****         uart_send_string("--- Iteration ");
- 788              		.loc 1 184 10 view .LVU165
- 789              	.LBB6:
- 186:neural_main.c ****         uart_send_string(" ---\r\n");
- 790              		.loc 1 186 9 is_stmt 0 view .LVU166
- 791 0098 2C46     		mov	r4, r5
- 792              	.LVL68:
- 793              	.L52:
- 186:neural_main.c ****         uart_send_string(" ---\r\n");
- 794              		.loc 1 186 9 view .LVU167
- 795              	.LBE6:
- 184:neural_main.c ****         uart_send_string("--- Iteration ");
- 796              		.loc 1 184 5 is_stmt 1 view .LVU168
- 797              	.LBB7:
- 185:neural_main.c ****         uart_send_number(iteration++);
- 798              		.loc 1 185 9 view .LVU169
- 799 009a 1848     		ldr	r0, .L56+44
- 800 009c FFF7FEFF 		bl	uart_send_string
- 801              	.LVL69:
- 186:neural_main.c ****         uart_send_string(" ---\r\n");
- 802              		.loc 1 186 9 view .LVU170
- 803 00a0 651C     		adds	r5, r4, #1
- 804              	.LVL70:
- 186:neural_main.c ****         uart_send_string(" ---\r\n");
- 805              		.loc 1 186 9 is_stmt 0 view .LVU171
- 806 00a2 2046     		mov	r0, r4
- 807 00a4 FFF7FEFF 		bl	uart_send_number
- 808              	.LVL71:
- 187:neural_main.c ****         
- 809              		.loc 1 187 9 is_stmt 1 view .LVU172
- 810 00a8 1548     		ldr	r0, .L56+48
- 811 00aa FFF7FEFF 		bl	uart_send_string
- 812              	.LVL72:
- 190:neural_main.c ****         
- 813              		.loc 1 190 9 view .LVU173
- 814 00ae FFF7FEFF 		bl	check_stack_usage
- 815              	.LVL73:
- 193:neural_main.c ****         int prediction = predict(test_digit, 28, 28, 1);
- 816              		.loc 1 193 9 view .LVU174
- 817 00b2 1448     		ldr	r0, .L56+52
- 818 00b4 FFF7FEFF 		bl	uart_send_string
- 819              	.LVL74:
- 194:neural_main.c ****         
- 820              		.loc 1 194 9 view .LVU175
-ARM GAS  /tmp/cco4vhKm.s 			page 20
+ 937 08d0 00000000 		.word	0
+ 938 08d4 00000000 		.word	0
+ 939 08d8 00000000 		.word	0
+ 940 08dc 00000000 		.word	0
+ 941 08e0 00000000 		.word	0
+ 942 08e4 00000000 		.word	0
+ 943 08e8 00000000 		.word	0
+ 944 08ec 00000000 		.word	0
+ 945 08f0 00000000 		.word	0
+ 946 08f4 00000000 		.word	0
+ 947 08f8 00000000 		.word	0
+ 948 08fc 00000000 		.word	0
+ 949 0900 00000000 		.word	0
+ 950 0904 00000000 		.word	0
+ 951 0908 00000000 		.word	0
+ 952 090c 00000000 		.word	0
+ 953 0910 00000000 		.word	0
+ 954 0914 00000000 		.word	0
+ 955 0918 00000000 		.word	0
+ 956 091c 00000000 		.word	0
+ 957 0920 00000000 		.word	0
+ 958 0924 00000000 		.word	0
+ 959 0928 00000000 		.word	0
+ 960 092c 00000000 		.word	0
+ 961 0930 00000000 		.word	0
+ 962 0934 00000000 		.word	0
+ 963 0938 00000000 		.word	0
+ 964 093c 00000000 		.word	0
+ 965 0940 00000000 		.word	0
+ 966 0944 00000000 		.word	0
+ 967 0948 00000000 		.word	0
+ 968 094c 00000000 		.word	0
+ 969 0950 00000000 		.word	0
+ 970 0954 00000000 		.word	0
+ 971 0958 00000000 		.word	0
+ 972 095c 00000000 		.word	0
+ 973 0960 00000000 		.word	0
+ 974 0964 00000000 		.word	0
+ 975 0968 00000000 		.word	0
+ 976 096c 00000000 		.word	0
+ 977 0970 00000000 		.word	0
+ 978 0974 00000000 		.word	0
+ 979 0978 00000000 		.word	0
+ 980 097c 00000000 		.word	0
+ 981 0980 00000000 		.word	0
+ 982 0984 00000000 		.word	0
+ 983 0988 00000000 		.word	0
+ 984 098c 00000000 		.word	0
+ 985 0990 00000000 		.word	0
+ 986 0994 00000000 		.word	0
+ 987 0998 00000000 		.word	0
+ 988 099c 00000000 		.word	0
+ 989 09a0 00000000 		.word	0
+ 990 09a4 00000000 		.word	0
+ 991 09a8 00000000 		.word	0
+ 992 09ac 00000000 		.word	0
+ 993 09b0 00000000 		.word	0
+ARM GAS  /tmp/cch6bb4i.s 			page 20
 
 
- 194:neural_main.c ****         
- 821              		.loc 1 194 26 is_stmt 0 view .LVU176
- 822 00b8 0123     		movs	r3, #1
- 823 00ba 1C22     		movs	r2, #28
- 824 00bc 1146     		mov	r1, r2
- 825 00be 1248     		ldr	r0, .L56+56
- 826 00c0 FFF7FEFF 		bl	predict
- 827              	.LVL75:
- 197:neural_main.c ****         if(prediction > 9) prediction = 9;
- 828              		.loc 1 197 9 is_stmt 1 view .LVU177
- 197:neural_main.c ****         if(prediction > 9) prediction = 9;
- 829              		.loc 1 197 11 is_stmt 0 view .LVU178
- 830 00c4 041E     		subs	r4, r0, #0
- 831 00c6 C9DB     		blt	.L53
- 198:neural_main.c ****         
- 832              		.loc 1 198 9 is_stmt 1 view .LVU179
- 198:neural_main.c ****         
- 833              		.loc 1 198 11 is_stmt 0 view .LVU180
- 834 00c8 092C     		cmp	r4, #9
- 835 00ca C8DD     		ble	.L51
- 198:neural_main.c ****         
- 836              		.loc 1 198 39 discriminator 1 view .LVU181
- 837 00cc 0924     		movs	r4, #9
- 838 00ce C6E7     		b	.L51
- 839              	.L57:
- 840              		.align	2
- 841              	.L56:
- 842 00d0 00000000 		.word	.LC2
- 843 00d4 28000000 		.word	.LC3
- 844 00d8 44000000 		.word	.LC4
- 845 00dc 68000000 		.word	.LC5
- 846 00e0 80000000 		.word	.LC6
- 847 00e4 98000000 		.word	.LC7
- 848 00e8 F4000000 		.word	.LC11
- 849 00ec 08010000 		.word	.LC12
- 850 00f0 0C010000 		.word	.LC13
- 851 00f4 1C010000 		.word	.LC14
- 852 00f8 28010000 		.word	.LC15
- 853 00fc C4000000 		.word	.LC8
- 854 0100 D4000000 		.word	.LC9
- 855 0104 DC000000 		.word	.LC10
- 856 0108 00000000 		.word	test_digit
- 857              	.LBE7:
- 858              		.cfi_endproc
- 859              	.LFE11:
- 861              		.section	.text.Reset_Handler,"ax",%progbits
- 862              		.align	1
- 863              		.global	Reset_Handler
- 864              		.syntax unified
- 865              		.thumb
- 866              		.thumb_func
- 868              	Reset_Handler:
- 869              	.LFB12:
- 214:neural_main.c ****     }
- 215:neural_main.c **** }
- 216:neural_main.c **** 
- 217:neural_main.c **** // Reset handler
-ARM GAS  /tmp/cco4vhKm.s 			page 21
+ 994 09b4 00000000 		.word	0
+ 995 09b8 00000000 		.word	0
+ 996 09bc 00000000 		.word	0
+ 997 09c0 00000000 		.word	0
+ 998 09c4 00000000 		.word	0
+ 999 09c8 00000000 		.word	0
+ 1000 09cc 00000000 		.word	0
+ 1001 09d0 00000000 		.word	0
+ 1002 09d4 00000000 		.word	0
+ 1003 09d8 00000000 		.word	0
+ 1004 09dc 00000000 		.word	0
+ 1005 09e0 00000000 		.word	0
+ 1006 09e4 00000000 		.word	0
+ 1007 09e8 00000000 		.word	0
+ 1008 09ec 00000000 		.word	0
+ 1009 09f0 00000000 		.word	0
+ 1010 09f4 00000000 		.word	0
+ 1011 09f8 00000000 		.word	0
+ 1012 09fc 00000000 		.word	0
+ 1013 0a00 00000000 		.word	0
+ 1014 0a04 00000000 		.word	0
+ 1015 0a08 00000000 		.word	0
+ 1016 0a0c 00000000 		.word	0
+ 1017 0a10 00000000 		.word	0
+ 1018 0a14 00000000 		.word	0
+ 1019 0a18 00000000 		.word	0
+ 1020 0a1c 00000000 		.word	0
+ 1021 0a20 00000000 		.word	0
+ 1022 0a24 00000000 		.word	0
+ 1023 0a28 00000000 		.word	0
+ 1024 0a2c 00000000 		.word	0
+ 1025 0a30 00000000 		.word	0
+ 1026 0a34 00000000 		.word	0
+ 1027 0a38 00000000 		.word	0
+ 1028 0a3c 00000000 		.word	0
+ 1029 0a40 00000000 		.word	0
+ 1030 0a44 00000000 		.word	0
+ 1031 0a48 00000000 		.word	0
+ 1032 0a4c 00000000 		.word	0
+ 1033 0a50 00000000 		.word	0
+ 1034 0a54 00000000 		.word	0
+ 1035 0a58 00000000 		.word	0
+ 1036 0a5c 00000000 		.word	0
+ 1037 0a60 00000000 		.word	0
+ 1038 0a64 00000000 		.word	0
+ 1039 0a68 00000000 		.word	0
+ 1040 0a6c 00000000 		.word	0
+ 1041 0a70 00000000 		.word	0
+ 1042 0a74 00000000 		.word	0
+ 1043 0a78 00000000 		.word	0
+ 1044 0a7c 00000000 		.word	0
+ 1045 0a80 00000000 		.word	0
+ 1046 0a84 00000000 		.word	0
+ 1047 0a88 00000000 		.word	0
+ 1048 0a8c 00000000 		.word	0
+ 1049 0a90 00000000 		.word	0
+ 1050 0a94 00000000 		.word	0
+ARM GAS  /tmp/cch6bb4i.s 			page 21
 
 
- 218:neural_main.c **** void Reset_Handler() {
- 870              		.loc 1 218 22 is_stmt 1 view -0
- 871              		.cfi_startproc
- 872              		@ Volatile: function does not return.
- 873              		@ args = 0, pretend = 0, frame = 0
- 874              		@ frame_needed = 0, uses_anonymous_args = 0
- 875 0000 08B5     		push	{r3, lr}
- 876              	.LCFI9:
- 877              		.cfi_def_cfa_offset 8
- 878              		.cfi_offset 3, -8
- 879              		.cfi_offset 14, -4
- 219:neural_main.c ****     // Basic startup (minimal for this demo)
- 220:neural_main.c ****     main_program();
- 880              		.loc 1 220 5 view .LVU183
- 881 0002 FFF7FEFF 		bl	main_program
- 882              	.LVL76:
- 883              		.cfi_endproc
- 884              	.LFE12:
- 886              		.global	vector_table
- 887              		.section	.isr_vector,"a"
- 888              		.align	2
- 891              	vector_table:
- 892 0000 00000120 		.word	536936448
- 893 0004 00000000 		.word	Reset_Handler
- 894              		.section	.rodata.test_digit,"a"
- 895              		.align	2
- 898              	test_digit:
- 899 0000 00000000 		.word	0
- 900 0004 00000000 		.word	0
- 901 0008 00000000 		.word	0
- 902 000c 00000000 		.word	0
- 903 0010 00000000 		.word	0
- 904 0014 00000000 		.word	0
- 905 0018 00000000 		.word	0
- 906 001c 00000000 		.word	0
- 907 0020 00000000 		.word	0
- 908 0024 00000000 		.word	0
- 909 0028 00000000 		.word	0
- 910 002c 00000000 		.word	0
- 911 0030 00000000 		.word	0
- 912 0034 00000000 		.word	0
- 913 0038 00000000 		.word	0
- 914 003c 00000000 		.word	0
- 915 0040 00000000 		.word	0
- 916 0044 00000000 		.word	0
- 917 0048 00000000 		.word	0
- 918 004c 00000000 		.word	0
- 919 0050 00000000 		.word	0
- 920 0054 00000000 		.word	0
- 921 0058 00000000 		.word	0
- 922 005c 00000000 		.word	0
- 923 0060 00000000 		.word	0
- 924 0064 00000000 		.word	0
- 925 0068 00000000 		.word	0
- 926 006c 00000000 		.word	0
- 927 0070 00000000 		.word	0
- 928 0074 00000000 		.word	0
-ARM GAS  /tmp/cco4vhKm.s 			page 22
+ 1051 0a98 00000000 		.word	0
+ 1052 0a9c 00000000 		.word	0
+ 1053 0aa0 00000000 		.word	0
+ 1054 0aa4 00000000 		.word	0
+ 1055 0aa8 00000000 		.word	0
+ 1056 0aac 00000000 		.word	0
+ 1057 0ab0 00000000 		.word	0
+ 1058 0ab4 00000000 		.word	0
+ 1059 0ab8 00000000 		.word	0
+ 1060 0abc 00000000 		.word	0
+ 1061 0ac0 00000000 		.word	0
+ 1062 0ac4 00000000 		.word	0
+ 1063 0ac8 00000000 		.word	0
+ 1064 0acc 00000000 		.word	0
+ 1065 0ad0 00000000 		.word	0
+ 1066 0ad4 00000000 		.word	0
+ 1067 0ad8 00000000 		.word	0
+ 1068 0adc 00000000 		.word	0
+ 1069 0ae0 00000000 		.word	0
+ 1070 0ae4 00000000 		.word	0
+ 1071 0ae8 00000000 		.word	0
+ 1072 0aec 00000000 		.word	0
+ 1073 0af0 00000000 		.word	0
+ 1074 0af4 00000000 		.word	0
+ 1075 0af8 00000000 		.word	0
+ 1076 0afc 00000000 		.word	0
+ 1077 0b00 00000000 		.word	0
+ 1078 0b04 00000000 		.word	0
+ 1079 0b08 00000000 		.word	0
+ 1080 0b0c 00000000 		.word	0
+ 1081 0b10 00000000 		.word	0
+ 1082 0b14 00000000 		.word	0
+ 1083 0b18 00000000 		.word	0
+ 1084 0b1c 00000000 		.word	0
+ 1085 0b20 00000000 		.word	0
+ 1086 0b24 00000000 		.word	0
+ 1087 0b28 00000000 		.word	0
+ 1088 0b2c 00000000 		.word	0
+ 1089 0b30 00000000 		.word	0
+ 1090 0b34 00000000 		.word	0
+ 1091 0b38 00000000 		.word	0
+ 1092 0b3c 00000000 		.word	0
+ 1093 0b40 00000000 		.word	0
+ 1094 0b44 00000000 		.word	0
+ 1095 0b48 00000000 		.word	0
+ 1096 0b4c 00000000 		.word	0
+ 1097 0b50 00000000 		.word	0
+ 1098 0b54 00000000 		.word	0
+ 1099 0b58 00000000 		.word	0
+ 1100 0b5c 00000000 		.word	0
+ 1101 0b60 00000000 		.word	0
+ 1102 0b64 00000000 		.word	0
+ 1103 0b68 00000000 		.word	0
+ 1104 0b6c 00000000 		.word	0
+ 1105 0b70 00000000 		.word	0
+ 1106 0b74 00000000 		.word	0
+ 1107 0b78 00000000 		.word	0
+ARM GAS  /tmp/cch6bb4i.s 			page 22
 
 
- 929 0078 00000000 		.word	0
- 930 007c 00000000 		.word	0
- 931 0080 00000000 		.word	0
- 932 0084 00000000 		.word	0
- 933 0088 00000000 		.word	0
- 934 008c 00000000 		.word	0
- 935 0090 00000000 		.word	0
- 936 0094 00000000 		.word	0
- 937 0098 00000000 		.word	0
- 938 009c 00000000 		.word	0
- 939 00a0 00000000 		.word	0
- 940 00a4 00000000 		.word	0
- 941 00a8 00000000 		.word	0
- 942 00ac 00000000 		.word	0
- 943 00b0 00000000 		.word	0
- 944 00b4 00000000 		.word	0
- 945 00b8 00000000 		.word	0
- 946 00bc 00000000 		.word	0
- 947 00c0 00000000 		.word	0
- 948 00c4 00000000 		.word	0
- 949 00c8 00000000 		.word	0
- 950 00cc 00000000 		.word	0
- 951 00d0 00000000 		.word	0
- 952 00d4 00000000 		.word	0
- 953 00d8 00000000 		.word	0
- 954 00dc 00000000 		.word	0
- 955 00e0 00000000 		.word	0
- 956 00e4 00000000 		.word	0
- 957 00e8 00000000 		.word	0
- 958 00ec 00000000 		.word	0
- 959 00f0 00000000 		.word	0
- 960 00f4 00000000 		.word	0
- 961 00f8 00000000 		.word	0
- 962 00fc 00000000 		.word	0
- 963 0100 00000000 		.word	0
- 964 0104 00000000 		.word	0
- 965 0108 00000000 		.word	0
- 966 010c 00000000 		.word	0
- 967 0110 00000000 		.word	0
- 968 0114 00000000 		.word	0
- 969 0118 00000000 		.word	0
- 970 011c 00000000 		.word	0
- 971 0120 00000000 		.word	0
- 972 0124 00000000 		.word	0
- 973 0128 00000000 		.word	0
- 974 012c 00000000 		.word	0
- 975 0130 00000000 		.word	0
- 976 0134 00000000 		.word	0
- 977 0138 00000000 		.word	0
- 978 013c 00000000 		.word	0
- 979 0140 00000000 		.word	0
- 980 0144 00000000 		.word	0
- 981 0148 00000000 		.word	0
- 982 014c 00000000 		.word	0
- 983 0150 00000000 		.word	0
- 984 0154 00000000 		.word	0
- 985 0158 00000000 		.word	0
-ARM GAS  /tmp/cco4vhKm.s 			page 23
-
-
- 986 015c 00000000 		.word	0
- 987 0160 00000000 		.word	0
- 988 0164 00000000 		.word	0
- 989 0168 00000000 		.word	0
- 990 016c 00000000 		.word	0
- 991 0170 00000000 		.word	0
- 992 0174 00000000 		.word	0
- 993 0178 00000000 		.word	0
- 994 017c 00000000 		.word	0
- 995 0180 00000000 		.word	0
- 996 0184 00000000 		.word	0
- 997 0188 00000000 		.word	0
- 998 018c 00000000 		.word	0
- 999 0190 CDCC4C3F 		.word	1061997773
- 1000 0194 6666663F 		.word	1063675494
- 1001 0198 CDCC4C3F 		.word	1061997773
- 1002 019c 00000000 		.word	0
- 1003 01a0 00000000 		.word	0
- 1004 01a4 00000000 		.word	0
- 1005 01a8 00000000 		.word	0
- 1006 01ac 00000000 		.word	0
- 1007 01b0 00000000 		.word	0
- 1008 01b4 00000000 		.word	0
- 1009 01b8 00000000 		.word	0
- 1010 01bc 00000000 		.word	0
- 1011 01c0 00000000 		.word	0
- 1012 01c4 00000000 		.word	0
- 1013 01c8 00000000 		.word	0
- 1014 01cc 00000000 		.word	0
- 1015 01d0 00000000 		.word	0
- 1016 01d4 00000000 		.word	0
- 1017 01d8 00000000 		.word	0
- 1018 01dc 00000000 		.word	0
- 1019 01e0 00000000 		.word	0
- 1020 01e4 00000000 		.word	0
- 1021 01e8 00000000 		.word	0
- 1022 01ec 00000000 		.word	0
- 1023 01f0 00000000 		.word	0
- 1024 01f4 00000000 		.word	0
- 1025 01f8 00000000 		.word	0
- 1026 01fc 00000000 		.word	0
- 1027 0200 3333333F 		.word	1060320051
- 1028 0204 6666663F 		.word	1063675494
- 1029 0208 3333333F 		.word	1060320051
- 1030 020c 00000000 		.word	0
- 1031 0210 00000000 		.word	0
- 1032 0214 00000000 		.word	0
- 1033 0218 00000000 		.word	0
- 1034 021c 00000000 		.word	0
- 1035 0220 00000000 		.word	0
- 1036 0224 00000000 		.word	0
- 1037 0228 00000000 		.word	0
- 1038 022c 00000000 		.word	0
- 1039 0230 00000000 		.word	0
- 1040 0234 00000000 		.word	0
- 1041 0238 00000000 		.word	0
- 1042 023c 00000000 		.word	0
-ARM GAS  /tmp/cco4vhKm.s 			page 24
-
-
- 1043 0240 00000000 		.word	0
- 1044 0244 00000000 		.word	0
- 1045 0248 00000000 		.word	0
- 1046 024c 00000000 		.word	0
- 1047 0250 00000000 		.word	0
- 1048 0254 00000000 		.word	0
- 1049 0258 00000000 		.word	0
- 1050 025c 00000000 		.word	0
- 1051 0260 00000000 		.word	0
- 1052 0264 00000000 		.word	0
- 1053 0268 00000000 		.word	0
- 1054 026c 00000000 		.word	0
- 1055 0270 00000000 		.word	0
- 1056 0274 00000000 		.word	0
- 1057 0278 00000000 		.word	0
- 1058 027c 00000000 		.word	0
- 1059 0280 00000000 		.word	0
- 1060 0284 00000000 		.word	0
- 1061 0288 00000000 		.word	0
- 1062 028c 00000000 		.word	0
- 1063 0290 00000000 		.word	0
- 1064 0294 00000000 		.word	0
- 1065 0298 00000000 		.word	0
- 1066 029c 00000000 		.word	0
- 1067 02a0 00000000 		.word	0
- 1068 02a4 00000000 		.word	0
- 1069 02a8 00000000 		.word	0
- 1070 02ac 00000000 		.word	0
- 1071 02b0 00000000 		.word	0
- 1072 02b4 00000000 		.word	0
- 1073 02b8 00000000 		.word	0
- 1074 02bc 00000000 		.word	0
- 1075 02c0 00000000 		.word	0
- 1076 02c4 00000000 		.word	0
- 1077 02c8 00000000 		.word	0
- 1078 02cc 00000000 		.word	0
- 1079 02d0 00000000 		.word	0
- 1080 02d4 00000000 		.word	0
- 1081 02d8 00000000 		.word	0
- 1082 02dc 00000000 		.word	0
- 1083 02e0 00000000 		.word	0
- 1084 02e4 00000000 		.word	0
- 1085 02e8 00000000 		.word	0
- 1086 02ec 00000000 		.word	0
- 1087 02f0 00000000 		.word	0
- 1088 02f4 00000000 		.word	0
- 1089 02f8 00000000 		.word	0
- 1090 02fc 00000000 		.word	0
- 1091 0300 00000000 		.word	0
- 1092 0304 00000000 		.word	0
- 1093 0308 00000000 		.word	0
- 1094 030c 00000000 		.word	0
- 1095 0310 00000000 		.word	0
- 1096 0314 00000000 		.word	0
- 1097 0318 00000000 		.word	0
- 1098 031c 00000000 		.word	0
- 1099 0320 00000000 		.word	0
-ARM GAS  /tmp/cco4vhKm.s 			page 25
-
-
- 1100 0324 00000000 		.word	0
- 1101 0328 00000000 		.word	0
- 1102 032c 00000000 		.word	0
- 1103 0330 00000000 		.word	0
- 1104 0334 00000000 		.word	0
- 1105 0338 00000000 		.word	0
- 1106 033c 00000000 		.word	0
- 1107 0340 00000000 		.word	0
- 1108 0344 00000000 		.word	0
- 1109 0348 00000000 		.word	0
- 1110 034c 00000000 		.word	0
- 1111 0350 00000000 		.word	0
- 1112 0354 00000000 		.word	0
- 1113 0358 00000000 		.word	0
- 1114 035c 00000000 		.word	0
- 1115 0360 00000000 		.word	0
- 1116 0364 00000000 		.word	0
- 1117 0368 00000000 		.word	0
- 1118 036c 00000000 		.word	0
- 1119 0370 00000000 		.word	0
- 1120 0374 00000000 		.word	0
- 1121 0378 00000000 		.word	0
- 1122 037c 00000000 		.word	0
- 1123 0380 00000000 		.word	0
- 1124 0384 00000000 		.word	0
- 1125 0388 00000000 		.word	0
- 1126 038c 00000000 		.word	0
- 1127 0390 00000000 		.word	0
- 1128 0394 00000000 		.word	0
- 1129 0398 00000000 		.word	0
- 1130 039c 00000000 		.word	0
- 1131 03a0 00000000 		.word	0
- 1132 03a4 00000000 		.word	0
- 1133 03a8 00000000 		.word	0
- 1134 03ac 00000000 		.word	0
- 1135 03b0 00000000 		.word	0
- 1136 03b4 00000000 		.word	0
- 1137 03b8 00000000 		.word	0
- 1138 03bc 00000000 		.word	0
- 1139 03c0 00000000 		.word	0
- 1140 03c4 00000000 		.word	0
- 1141 03c8 00000000 		.word	0
- 1142 03cc 00000000 		.word	0
- 1143 03d0 00000000 		.word	0
- 1144 03d4 00000000 		.word	0
- 1145 03d8 00000000 		.word	0
- 1146 03dc 00000000 		.word	0
- 1147 03e0 00000000 		.word	0
- 1148 03e4 00000000 		.word	0
- 1149 03e8 00000000 		.word	0
- 1150 03ec 00000000 		.word	0
- 1151 03f0 00000000 		.word	0
- 1152 03f4 00000000 		.word	0
- 1153 03f8 00000000 		.word	0
- 1154 03fc 00000000 		.word	0
- 1155 0400 00000000 		.word	0
- 1156 0404 00000000 		.word	0
-ARM GAS  /tmp/cco4vhKm.s 			page 26
-
-
- 1157 0408 00000000 		.word	0
- 1158 040c 00000000 		.word	0
- 1159 0410 00000000 		.word	0
- 1160 0414 00000000 		.word	0
- 1161 0418 00000000 		.word	0
- 1162 041c 00000000 		.word	0
- 1163 0420 00000000 		.word	0
- 1164 0424 00000000 		.word	0
- 1165 0428 00000000 		.word	0
- 1166 042c 00000000 		.word	0
- 1167 0430 00000000 		.word	0
- 1168 0434 00000000 		.word	0
- 1169 0438 00000000 		.word	0
- 1170 043c 00000000 		.word	0
- 1171 0440 00000000 		.word	0
- 1172 0444 00000000 		.word	0
- 1173 0448 00000000 		.word	0
- 1174 044c 00000000 		.word	0
- 1175 0450 00000000 		.word	0
- 1176 0454 00000000 		.word	0
- 1177 0458 00000000 		.word	0
- 1178 045c 00000000 		.word	0
- 1179 0460 00000000 		.word	0
- 1180 0464 00000000 		.word	0
- 1181 0468 00000000 		.word	0
- 1182 046c 00000000 		.word	0
- 1183 0470 00000000 		.word	0
- 1184 0474 00000000 		.word	0
- 1185 0478 00000000 		.word	0
- 1186 047c 00000000 		.word	0
- 1187 0480 00000000 		.word	0
- 1188 0484 00000000 		.word	0
- 1189 0488 00000000 		.word	0
- 1190 048c 00000000 		.word	0
- 1191 0490 00000000 		.word	0
- 1192 0494 00000000 		.word	0
- 1193 0498 00000000 		.word	0
- 1194 049c 00000000 		.word	0
- 1195 04a0 00000000 		.word	0
- 1196 04a4 00000000 		.word	0
- 1197 04a8 00000000 		.word	0
- 1198 04ac 00000000 		.word	0
- 1199 04b0 00000000 		.word	0
- 1200 04b4 00000000 		.word	0
- 1201 04b8 00000000 		.word	0
- 1202 04bc 00000000 		.word	0
- 1203 04c0 00000000 		.word	0
- 1204 04c4 00000000 		.word	0
- 1205 04c8 00000000 		.word	0
- 1206 04cc 00000000 		.word	0
- 1207 04d0 00000000 		.word	0
- 1208 04d4 00000000 		.word	0
- 1209 04d8 00000000 		.word	0
- 1210 04dc 00000000 		.word	0
- 1211 04e0 00000000 		.word	0
- 1212 04e4 00000000 		.word	0
- 1213 04e8 00000000 		.word	0
-ARM GAS  /tmp/cco4vhKm.s 			page 27
-
-
- 1214 04ec 00000000 		.word	0
- 1215 04f0 00000000 		.word	0
- 1216 04f4 00000000 		.word	0
- 1217 04f8 00000000 		.word	0
- 1218 04fc 00000000 		.word	0
- 1219 0500 00000000 		.word	0
- 1220 0504 00000000 		.word	0
- 1221 0508 00000000 		.word	0
- 1222 050c 00000000 		.word	0
- 1223 0510 00000000 		.word	0
- 1224 0514 00000000 		.word	0
- 1225 0518 00000000 		.word	0
- 1226 051c 00000000 		.word	0
- 1227 0520 00000000 		.word	0
- 1228 0524 00000000 		.word	0
- 1229 0528 00000000 		.word	0
- 1230 052c 00000000 		.word	0
- 1231 0530 00000000 		.word	0
- 1232 0534 00000000 		.word	0
- 1233 0538 00000000 		.word	0
- 1234 053c 00000000 		.word	0
- 1235 0540 00000000 		.word	0
- 1236 0544 00000000 		.word	0
- 1237 0548 00000000 		.word	0
- 1238 054c 00000000 		.word	0
- 1239 0550 00000000 		.word	0
- 1240 0554 00000000 		.word	0
- 1241 0558 00000000 		.word	0
- 1242 055c 00000000 		.word	0
- 1243 0560 00000000 		.word	0
- 1244 0564 00000000 		.word	0
- 1245 0568 00000000 		.word	0
- 1246 056c 00000000 		.word	0
- 1247 0570 00000000 		.word	0
- 1248 0574 00000000 		.word	0
- 1249 0578 00000000 		.word	0
- 1250 057c 00000000 		.word	0
- 1251 0580 00000000 		.word	0
- 1252 0584 00000000 		.word	0
- 1253 0588 00000000 		.word	0
- 1254 058c 00000000 		.word	0
- 1255 0590 00000000 		.word	0
- 1256 0594 00000000 		.word	0
- 1257 0598 00000000 		.word	0
- 1258 059c 00000000 		.word	0
- 1259 05a0 00000000 		.word	0
- 1260 05a4 00000000 		.word	0
- 1261 05a8 00000000 		.word	0
- 1262 05ac 00000000 		.word	0
- 1263 05b0 00000000 		.word	0
- 1264 05b4 00000000 		.word	0
- 1265 05b8 00000000 		.word	0
- 1266 05bc 00000000 		.word	0
- 1267 05c0 00000000 		.word	0
- 1268 05c4 00000000 		.word	0
- 1269 05c8 00000000 		.word	0
- 1270 05cc 00000000 		.word	0
-ARM GAS  /tmp/cco4vhKm.s 			page 28
-
-
- 1271 05d0 00000000 		.word	0
- 1272 05d4 00000000 		.word	0
- 1273 05d8 00000000 		.word	0
- 1274 05dc 00000000 		.word	0
- 1275 05e0 00000000 		.word	0
- 1276 05e4 00000000 		.word	0
- 1277 05e8 00000000 		.word	0
- 1278 05ec 00000000 		.word	0
- 1279 05f0 00000000 		.word	0
- 1280 05f4 00000000 		.word	0
- 1281 05f8 00000000 		.word	0
- 1282 05fc 00000000 		.word	0
- 1283 0600 00000000 		.word	0
- 1284 0604 00000000 		.word	0
- 1285 0608 00000000 		.word	0
- 1286 060c 00000000 		.word	0
- 1287 0610 00000000 		.word	0
- 1288 0614 00000000 		.word	0
- 1289 0618 00000000 		.word	0
- 1290 061c 00000000 		.word	0
- 1291 0620 00000000 		.word	0
- 1292 0624 00000000 		.word	0
- 1293 0628 00000000 		.word	0
- 1294 062c 00000000 		.word	0
- 1295 0630 00000000 		.word	0
- 1296 0634 00000000 		.word	0
- 1297 0638 00000000 		.word	0
- 1298 063c 00000000 		.word	0
- 1299 0640 00000000 		.word	0
- 1300 0644 00000000 		.word	0
- 1301 0648 00000000 		.word	0
- 1302 064c 00000000 		.word	0
- 1303 0650 00000000 		.word	0
- 1304 0654 00000000 		.word	0
- 1305 0658 00000000 		.word	0
- 1306 065c 00000000 		.word	0
- 1307 0660 00000000 		.word	0
- 1308 0664 00000000 		.word	0
- 1309 0668 00000000 		.word	0
- 1310 066c 00000000 		.word	0
- 1311 0670 00000000 		.word	0
- 1312 0674 00000000 		.word	0
- 1313 0678 00000000 		.word	0
- 1314 067c 00000000 		.word	0
- 1315 0680 00000000 		.word	0
- 1316 0684 00000000 		.word	0
- 1317 0688 00000000 		.word	0
- 1318 068c 00000000 		.word	0
- 1319 0690 00000000 		.word	0
- 1320 0694 00000000 		.word	0
- 1321 0698 00000000 		.word	0
- 1322 069c 00000000 		.word	0
- 1323 06a0 00000000 		.word	0
- 1324 06a4 00000000 		.word	0
- 1325 06a8 00000000 		.word	0
- 1326 06ac 00000000 		.word	0
- 1327 06b0 00000000 		.word	0
-ARM GAS  /tmp/cco4vhKm.s 			page 29
-
-
- 1328 06b4 00000000 		.word	0
- 1329 06b8 00000000 		.word	0
- 1330 06bc 00000000 		.word	0
- 1331 06c0 00000000 		.word	0
- 1332 06c4 00000000 		.word	0
- 1333 06c8 00000000 		.word	0
- 1334 06cc 00000000 		.word	0
- 1335 06d0 00000000 		.word	0
- 1336 06d4 00000000 		.word	0
- 1337 06d8 00000000 		.word	0
- 1338 06dc 00000000 		.word	0
- 1339 06e0 00000000 		.word	0
- 1340 06e4 00000000 		.word	0
- 1341 06e8 00000000 		.word	0
- 1342 06ec 00000000 		.word	0
- 1343 06f0 00000000 		.word	0
- 1344 06f4 00000000 		.word	0
- 1345 06f8 00000000 		.word	0
- 1346 06fc 00000000 		.word	0
- 1347 0700 00000000 		.word	0
- 1348 0704 00000000 		.word	0
- 1349 0708 00000000 		.word	0
- 1350 070c 00000000 		.word	0
- 1351 0710 00000000 		.word	0
- 1352 0714 00000000 		.word	0
- 1353 0718 00000000 		.word	0
- 1354 071c 00000000 		.word	0
- 1355 0720 00000000 		.word	0
- 1356 0724 00000000 		.word	0
- 1357 0728 00000000 		.word	0
- 1358 072c 00000000 		.word	0
- 1359 0730 00000000 		.word	0
- 1360 0734 00000000 		.word	0
- 1361 0738 00000000 		.word	0
- 1362 073c 00000000 		.word	0
- 1363 0740 00000000 		.word	0
- 1364 0744 00000000 		.word	0
- 1365 0748 00000000 		.word	0
- 1366 074c 00000000 		.word	0
- 1367 0750 00000000 		.word	0
- 1368 0754 00000000 		.word	0
- 1369 0758 00000000 		.word	0
- 1370 075c 00000000 		.word	0
- 1371 0760 00000000 		.word	0
- 1372 0764 00000000 		.word	0
- 1373 0768 00000000 		.word	0
- 1374 076c 00000000 		.word	0
- 1375 0770 00000000 		.word	0
- 1376 0774 00000000 		.word	0
- 1377 0778 00000000 		.word	0
- 1378 077c 00000000 		.word	0
- 1379 0780 00000000 		.word	0
- 1380 0784 00000000 		.word	0
- 1381 0788 00000000 		.word	0
- 1382 078c 00000000 		.word	0
- 1383 0790 00000000 		.word	0
- 1384 0794 00000000 		.word	0
-ARM GAS  /tmp/cco4vhKm.s 			page 30
-
-
- 1385 0798 00000000 		.word	0
- 1386 079c 00000000 		.word	0
- 1387 07a0 00000000 		.word	0
- 1388 07a4 00000000 		.word	0
- 1389 07a8 00000000 		.word	0
- 1390 07ac 00000000 		.word	0
- 1391 07b0 00000000 		.word	0
- 1392 07b4 00000000 		.word	0
- 1393 07b8 00000000 		.word	0
- 1394 07bc 00000000 		.word	0
- 1395 07c0 00000000 		.word	0
- 1396 07c4 00000000 		.word	0
- 1397 07c8 00000000 		.word	0
- 1398 07cc 00000000 		.word	0
- 1399 07d0 00000000 		.word	0
- 1400 07d4 00000000 		.word	0
- 1401 07d8 00000000 		.word	0
- 1402 07dc 00000000 		.word	0
- 1403 07e0 00000000 		.word	0
- 1404 07e4 00000000 		.word	0
- 1405 07e8 00000000 		.word	0
- 1406 07ec 00000000 		.word	0
- 1407 07f0 00000000 		.word	0
- 1408 07f4 00000000 		.word	0
- 1409 07f8 00000000 		.word	0
- 1410 07fc 00000000 		.word	0
- 1411 0800 00000000 		.word	0
- 1412 0804 00000000 		.word	0
- 1413 0808 00000000 		.word	0
- 1414 080c 00000000 		.word	0
- 1415 0810 00000000 		.word	0
- 1416 0814 00000000 		.word	0
- 1417 0818 00000000 		.word	0
- 1418 081c 00000000 		.word	0
- 1419 0820 00000000 		.word	0
- 1420 0824 00000000 		.word	0
- 1421 0828 00000000 		.word	0
- 1422 082c 00000000 		.word	0
- 1423 0830 00000000 		.word	0
- 1424 0834 00000000 		.word	0
- 1425 0838 00000000 		.word	0
- 1426 083c 00000000 		.word	0
- 1427 0840 00000000 		.word	0
- 1428 0844 00000000 		.word	0
- 1429 0848 00000000 		.word	0
- 1430 084c 00000000 		.word	0
- 1431 0850 00000000 		.word	0
- 1432 0854 00000000 		.word	0
- 1433 0858 00000000 		.word	0
- 1434 085c 00000000 		.word	0
- 1435 0860 00000000 		.word	0
- 1436 0864 00000000 		.word	0
- 1437 0868 00000000 		.word	0
- 1438 086c 00000000 		.word	0
- 1439 0870 00000000 		.word	0
- 1440 0874 00000000 		.word	0
- 1441 0878 00000000 		.word	0
-ARM GAS  /tmp/cco4vhKm.s 			page 31
-
-
- 1442 087c 00000000 		.word	0
- 1443 0880 00000000 		.word	0
- 1444 0884 00000000 		.word	0
- 1445 0888 00000000 		.word	0
- 1446 088c 00000000 		.word	0
- 1447 0890 00000000 		.word	0
- 1448 0894 00000000 		.word	0
- 1449 0898 00000000 		.word	0
- 1450 089c 00000000 		.word	0
- 1451 08a0 00000000 		.word	0
- 1452 08a4 00000000 		.word	0
- 1453 08a8 00000000 		.word	0
- 1454 08ac 00000000 		.word	0
- 1455 08b0 00000000 		.word	0
- 1456 08b4 00000000 		.word	0
- 1457 08b8 00000000 		.word	0
- 1458 08bc 00000000 		.word	0
- 1459 08c0 00000000 		.word	0
- 1460 08c4 00000000 		.word	0
- 1461 08c8 00000000 		.word	0
- 1462 08cc 00000000 		.word	0
- 1463 08d0 00000000 		.word	0
- 1464 08d4 00000000 		.word	0
- 1465 08d8 00000000 		.word	0
- 1466 08dc 00000000 		.word	0
- 1467 08e0 00000000 		.word	0
- 1468 08e4 00000000 		.word	0
- 1469 08e8 00000000 		.word	0
- 1470 08ec 00000000 		.word	0
- 1471 08f0 00000000 		.word	0
- 1472 08f4 00000000 		.word	0
- 1473 08f8 00000000 		.word	0
- 1474 08fc 00000000 		.word	0
- 1475 0900 00000000 		.word	0
- 1476 0904 00000000 		.word	0
- 1477 0908 00000000 		.word	0
- 1478 090c 00000000 		.word	0
- 1479 0910 00000000 		.word	0
- 1480 0914 00000000 		.word	0
- 1481 0918 00000000 		.word	0
- 1482 091c 00000000 		.word	0
- 1483 0920 00000000 		.word	0
- 1484 0924 00000000 		.word	0
- 1485 0928 00000000 		.word	0
- 1486 092c 00000000 		.word	0
- 1487 0930 00000000 		.word	0
- 1488 0934 00000000 		.word	0
- 1489 0938 00000000 		.word	0
- 1490 093c 00000000 		.word	0
- 1491 0940 00000000 		.word	0
- 1492 0944 00000000 		.word	0
- 1493 0948 00000000 		.word	0
- 1494 094c 00000000 		.word	0
- 1495 0950 00000000 		.word	0
- 1496 0954 00000000 		.word	0
- 1497 0958 00000000 		.word	0
- 1498 095c 00000000 		.word	0
-ARM GAS  /tmp/cco4vhKm.s 			page 32
-
-
- 1499 0960 00000000 		.word	0
- 1500 0964 00000000 		.word	0
- 1501 0968 00000000 		.word	0
- 1502 096c 00000000 		.word	0
- 1503 0970 00000000 		.word	0
- 1504 0974 00000000 		.word	0
- 1505 0978 00000000 		.word	0
- 1506 097c 00000000 		.word	0
- 1507 0980 00000000 		.word	0
- 1508 0984 00000000 		.word	0
- 1509 0988 00000000 		.word	0
- 1510 098c 00000000 		.word	0
- 1511 0990 00000000 		.word	0
- 1512 0994 00000000 		.word	0
- 1513 0998 00000000 		.word	0
- 1514 099c 00000000 		.word	0
- 1515 09a0 00000000 		.word	0
- 1516 09a4 00000000 		.word	0
- 1517 09a8 00000000 		.word	0
- 1518 09ac 00000000 		.word	0
- 1519 09b0 00000000 		.word	0
- 1520 09b4 00000000 		.word	0
- 1521 09b8 00000000 		.word	0
- 1522 09bc 00000000 		.word	0
- 1523 09c0 00000000 		.word	0
- 1524 09c4 00000000 		.word	0
- 1525 09c8 00000000 		.word	0
- 1526 09cc 00000000 		.word	0
- 1527 09d0 00000000 		.word	0
- 1528 09d4 00000000 		.word	0
- 1529 09d8 00000000 		.word	0
- 1530 09dc 00000000 		.word	0
- 1531 09e0 00000000 		.word	0
- 1532 09e4 00000000 		.word	0
- 1533 09e8 00000000 		.word	0
- 1534 09ec 00000000 		.word	0
- 1535 09f0 00000000 		.word	0
- 1536 09f4 00000000 		.word	0
- 1537 09f8 00000000 		.word	0
- 1538 09fc 00000000 		.word	0
- 1539 0a00 00000000 		.word	0
- 1540 0a04 00000000 		.word	0
- 1541 0a08 00000000 		.word	0
- 1542 0a0c 00000000 		.word	0
- 1543 0a10 00000000 		.word	0
- 1544 0a14 00000000 		.word	0
- 1545 0a18 00000000 		.word	0
- 1546 0a1c 00000000 		.word	0
- 1547 0a20 00000000 		.word	0
- 1548 0a24 00000000 		.word	0
- 1549 0a28 00000000 		.word	0
- 1550 0a2c 00000000 		.word	0
- 1551 0a30 00000000 		.word	0
- 1552 0a34 00000000 		.word	0
- 1553 0a38 00000000 		.word	0
- 1554 0a3c 00000000 		.word	0
- 1555 0a40 00000000 		.word	0
-ARM GAS  /tmp/cco4vhKm.s 			page 33
-
-
- 1556 0a44 00000000 		.word	0
- 1557 0a48 00000000 		.word	0
- 1558 0a4c 00000000 		.word	0
- 1559 0a50 00000000 		.word	0
- 1560 0a54 00000000 		.word	0
- 1561 0a58 00000000 		.word	0
- 1562 0a5c 00000000 		.word	0
- 1563 0a60 00000000 		.word	0
- 1564 0a64 00000000 		.word	0
- 1565 0a68 00000000 		.word	0
- 1566 0a6c 00000000 		.word	0
- 1567 0a70 00000000 		.word	0
- 1568 0a74 00000000 		.word	0
- 1569 0a78 00000000 		.word	0
- 1570 0a7c 00000000 		.word	0
- 1571 0a80 00000000 		.word	0
- 1572 0a84 00000000 		.word	0
- 1573 0a88 00000000 		.word	0
- 1574 0a8c 00000000 		.word	0
- 1575 0a90 00000000 		.word	0
- 1576 0a94 00000000 		.word	0
- 1577 0a98 00000000 		.word	0
- 1578 0a9c 00000000 		.word	0
- 1579 0aa0 00000000 		.word	0
- 1580 0aa4 00000000 		.word	0
- 1581 0aa8 00000000 		.word	0
- 1582 0aac 00000000 		.word	0
- 1583 0ab0 00000000 		.word	0
- 1584 0ab4 00000000 		.word	0
- 1585 0ab8 00000000 		.word	0
- 1586 0abc 00000000 		.word	0
- 1587 0ac0 00000000 		.word	0
- 1588 0ac4 00000000 		.word	0
- 1589 0ac8 00000000 		.word	0
- 1590 0acc 00000000 		.word	0
- 1591 0ad0 00000000 		.word	0
- 1592 0ad4 00000000 		.word	0
- 1593 0ad8 00000000 		.word	0
- 1594 0adc 00000000 		.word	0
- 1595 0ae0 00000000 		.word	0
- 1596 0ae4 00000000 		.word	0
- 1597 0ae8 00000000 		.word	0
- 1598 0aec 00000000 		.word	0
- 1599 0af0 00000000 		.word	0
- 1600 0af4 00000000 		.word	0
- 1601 0af8 00000000 		.word	0
- 1602 0afc 00000000 		.word	0
- 1603 0b00 00000000 		.word	0
- 1604 0b04 00000000 		.word	0
- 1605 0b08 00000000 		.word	0
- 1606 0b0c 00000000 		.word	0
- 1607 0b10 00000000 		.word	0
- 1608 0b14 00000000 		.word	0
- 1609 0b18 00000000 		.word	0
- 1610 0b1c 00000000 		.word	0
- 1611 0b20 00000000 		.word	0
- 1612 0b24 00000000 		.word	0
-ARM GAS  /tmp/cco4vhKm.s 			page 34
-
-
- 1613 0b28 00000000 		.word	0
- 1614 0b2c 00000000 		.word	0
- 1615 0b30 00000000 		.word	0
- 1616 0b34 00000000 		.word	0
- 1617 0b38 00000000 		.word	0
- 1618 0b3c 00000000 		.word	0
- 1619 0b40 00000000 		.word	0
- 1620 0b44 00000000 		.word	0
- 1621 0b48 00000000 		.word	0
- 1622 0b4c 00000000 		.word	0
- 1623 0b50 00000000 		.word	0
- 1624 0b54 00000000 		.word	0
- 1625 0b58 00000000 		.word	0
- 1626 0b5c 00000000 		.word	0
- 1627 0b60 00000000 		.word	0
- 1628 0b64 00000000 		.word	0
- 1629 0b68 00000000 		.word	0
- 1630 0b6c 00000000 		.word	0
- 1631 0b70 00000000 		.word	0
- 1632 0b74 00000000 		.word	0
- 1633 0b78 00000000 		.word	0
- 1634 0b7c 00000000 		.word	0
- 1635 0b80 00000000 		.word	0
- 1636 0b84 00000000 		.word	0
- 1637 0b88 00000000 		.word	0
- 1638 0b8c 00000000 		.word	0
- 1639 0b90 00000000 		.word	0
- 1640 0b94 00000000 		.word	0
- 1641 0b98 00000000 		.word	0
- 1642 0b9c 00000000 		.word	0
- 1643 0ba0 00000000 		.word	0
- 1644 0ba4 00000000 		.word	0
- 1645 0ba8 00000000 		.word	0
- 1646 0bac 00000000 		.word	0
- 1647 0bb0 00000000 		.word	0
- 1648 0bb4 00000000 		.word	0
- 1649 0bb8 00000000 		.word	0
- 1650 0bbc 00000000 		.word	0
- 1651 0bc0 00000000 		.word	0
- 1652 0bc4 00000000 		.word	0
- 1653 0bc8 00000000 		.word	0
- 1654 0bcc 00000000 		.word	0
- 1655 0bd0 00000000 		.word	0
- 1656 0bd4 00000000 		.word	0
- 1657 0bd8 00000000 		.word	0
- 1658 0bdc 00000000 		.word	0
- 1659 0be0 00000000 		.word	0
- 1660 0be4 00000000 		.word	0
- 1661 0be8 00000000 		.word	0
- 1662 0bec 00000000 		.word	0
- 1663 0bf0 00000000 		.word	0
- 1664 0bf4 00000000 		.word	0
- 1665 0bf8 00000000 		.word	0
- 1666 0bfc 00000000 		.word	0
- 1667 0c00 00000000 		.word	0
- 1668 0c04 00000000 		.word	0
- 1669 0c08 00000000 		.word	0
-ARM GAS  /tmp/cco4vhKm.s 			page 35
-
-
- 1670 0c0c 00000000 		.word	0
- 1671 0c10 00000000 		.word	0
- 1672 0c14 00000000 		.word	0
- 1673 0c18 00000000 		.word	0
- 1674 0c1c 00000000 		.word	0
- 1675 0c20 00000000 		.word	0
- 1676 0c24 00000000 		.word	0
- 1677 0c28 00000000 		.word	0
- 1678 0c2c 00000000 		.word	0
- 1679 0c30 00000000 		.word	0
- 1680 0c34 00000000 		.word	0
- 1681 0c38 00000000 		.word	0
- 1682 0c3c 00000000 		.word	0
- 1683              		.text
- 1684              	.Letext0:
- 1685              		.file 2 "../output/model.h"
-ARM GAS  /tmp/cco4vhKm.s 			page 36
+ 1108 0b7c 00000000 		.word	0
+ 1109 0b80 00000000 		.word	0
+ 1110 0b84 00000000 		.word	0
+ 1111 0b88 00000000 		.word	0
+ 1112 0b8c 00000000 		.word	0
+ 1113 0b90 00000000 		.word	0
+ 1114 0b94 00000000 		.word	0
+ 1115 0b98 00000000 		.word	0
+ 1116 0b9c 00000000 		.word	0
+ 1117 0ba0 00000000 		.word	0
+ 1118 0ba4 00000000 		.word	0
+ 1119 0ba8 00000000 		.word	0
+ 1120 0bac 00000000 		.word	0
+ 1121 0bb0 00000000 		.word	0
+ 1122 0bb4 00000000 		.word	0
+ 1123 0bb8 00000000 		.word	0
+ 1124 0bbc 00000000 		.word	0
+ 1125 0bc0 00000000 		.word	0
+ 1126 0bc4 00000000 		.word	0
+ 1127 0bc8 00000000 		.word	0
+ 1128 0bcc 00000000 		.word	0
+ 1129 0bd0 00000000 		.word	0
+ 1130 0bd4 00000000 		.word	0
+ 1131 0bd8 00000000 		.word	0
+ 1132 0bdc 00000000 		.word	0
+ 1133 0be0 00000000 		.word	0
+ 1134 0be4 00000000 		.word	0
+ 1135 0be8 00000000 		.word	0
+ 1136 0bec 00000000 		.word	0
+ 1137 0bf0 00000000 		.word	0
+ 1138 0bf4 00000000 		.word	0
+ 1139 0bf8 00000000 		.word	0
+ 1140 0bfc 00000000 		.word	0
+ 1141 0c00 00000000 		.word	0
+ 1142 0c04 00000000 		.word	0
+ 1143 0c08 00000000 		.word	0
+ 1144 0c0c 00000000 		.word	0
+ 1145 0c10 00000000 		.word	0
+ 1146 0c14 00000000 		.word	0
+ 1147 0c18 00000000 		.word	0
+ 1148 0c1c 00000000 		.word	0
+ 1149 0c20 00000000 		.word	0
+ 1150 0c24 00000000 		.word	0
+ 1151 0c28 00000000 		.word	0
+ 1152 0c2c 00000000 		.word	0
+ 1153 0c30 00000000 		.word	0
+ 1154 0c34 00000000 		.word	0
+ 1155 0c38 00000000 		.word	0
+ 1156 0c3c 00000000 		.word	0
+ 1157              		.text
+ 1158              	.Letext0:
+ 1159              		.file 2 "../output/model.h"
+ARM GAS  /tmp/cch6bb4i.s 			page 23
 
 
 DEFINED SYMBOLS
                             *ABS*:00000000 neural_main.c
-     /tmp/cco4vhKm.s:21     .text.setup_system_clock:00000000 $t
-     /tmp/cco4vhKm.s:27     .text.setup_system_clock:00000000 setup_system_clock
-     /tmp/cco4vhKm.s:64     .text.setup_system_clock:00000034 $d
-     /tmp/cco4vhKm.s:69     .text.delay_ms:00000000 $t
-     /tmp/cco4vhKm.s:75     .text.delay_ms:00000000 delay_ms
-     /tmp/cco4vhKm.s:120    .text.setup_gpio:00000000 $t
-     /tmp/cco4vhKm.s:126    .text.setup_gpio:00000000 setup_gpio
-     /tmp/cco4vhKm.s:157    .text.setup_gpio:00000024 $d
-     /tmp/cco4vhKm.s:163    .text.setup_uart:00000000 $t
-     /tmp/cco4vhKm.s:169    .text.setup_uart:00000000 setup_uart
-     /tmp/cco4vhKm.s:227    .text.setup_uart:00000054 $d
-     /tmp/cco4vhKm.s:232    .text.uart_send_char:00000000 $t
-     /tmp/cco4vhKm.s:238    .text.uart_send_char:00000000 uart_send_char
-     /tmp/cco4vhKm.s:264    .text.uart_send_string:00000000 $t
-     /tmp/cco4vhKm.s:270    .text.uart_send_string:00000000 uart_send_string
-     /tmp/cco4vhKm.s:308    .text.uart_send_number:00000000 $t
-     /tmp/cco4vhKm.s:314    .text.uart_send_number:00000000 uart_send_number
-     /tmp/cco4vhKm.s:426    .text.uart_send_number:00000068 $d
-     /tmp/cco4vhKm.s:431    .rodata.check_stack_usage.str1.4:00000000 $d
-     /tmp/cco4vhKm.s:438    .text.check_stack_usage:00000000 $t
-     /tmp/cco4vhKm.s:444    .text.check_stack_usage:00000000 check_stack_usage
-     /tmp/cco4vhKm.s:481    .text.check_stack_usage:00000020 $d
-     /tmp/cco4vhKm.s:487    .text.led_on:00000000 $t
-     /tmp/cco4vhKm.s:493    .text.led_on:00000000 led_on
-     /tmp/cco4vhKm.s:510    .text.led_on:00000008 $d
-     /tmp/cco4vhKm.s:515    .text.led_off:00000000 $t
-     /tmp/cco4vhKm.s:521    .text.led_off:00000000 led_off
-     /tmp/cco4vhKm.s:538    .text.led_off:0000000c $d
-     /tmp/cco4vhKm.s:543    .text.led_blink:00000000 $t
-     /tmp/cco4vhKm.s:549    .text.led_blink:00000000 led_blink
-     /tmp/cco4vhKm.s:604    .rodata.main_program.str1.4:00000000 $d
-     /tmp/cco4vhKm.s:648    .text.main_program:00000000 $t
-     /tmp/cco4vhKm.s:654    .text.main_program:00000000 main_program
-     /tmp/cco4vhKm.s:842    .text.main_program:000000d0 $d
-     /tmp/cco4vhKm.s:898    .rodata.test_digit:00000000 test_digit
-     /tmp/cco4vhKm.s:862    .text.Reset_Handler:00000000 $t
-     /tmp/cco4vhKm.s:868    .text.Reset_Handler:00000000 Reset_Handler
-     /tmp/cco4vhKm.s:891    .isr_vector:00000000 vector_table
-     /tmp/cco4vhKm.s:888    .isr_vector:00000000 $d
-     /tmp/cco4vhKm.s:895    .rodata.test_digit:00000000 $d
+     /tmp/cch6bb4i.s:21     .text.delay_ms:00000000 $t
+     /tmp/cch6bb4i.s:27     .text.delay_ms:00000000 delay_ms
+     /tmp/cch6bb4i.s:72     .text.setup_gpio:00000000 $t
+     /tmp/cch6bb4i.s:78     .text.setup_gpio:00000000 setup_gpio
+     /tmp/cch6bb4i.s:109    .text.setup_gpio:00000024 $d
+     /tmp/cch6bb4i.s:115    .text.led_on:00000000 $t
+     /tmp/cch6bb4i.s:121    .text.led_on:00000000 led_on
+     /tmp/cch6bb4i.s:138    .text.led_on:00000008 $d
+     /tmp/cch6bb4i.s:143    .text.led_off:00000000 $t
+     /tmp/cch6bb4i.s:149    .text.led_off:00000000 led_off
+     /tmp/cch6bb4i.s:166    .text.led_off:0000000c $d
+     /tmp/cch6bb4i.s:171    .text.led_blink:00000000 $t
+     /tmp/cch6bb4i.s:177    .text.led_blink:00000000 led_blink
+     /tmp/cch6bb4i.s:232    .text.main_program:00000000 $t
+     /tmp/cch6bb4i.s:238    .text.main_program:00000000 main_program
+     /tmp/cch6bb4i.s:335    .text.main_program:00000058 $d
+     /tmp/cch6bb4i.s:372    .rodata.test_digit:00000000 test_digit
+     /tmp/cch6bb4i.s:341    .text.Reset_Handler:00000000 $t
+     /tmp/cch6bb4i.s:347    .text.Reset_Handler:00000000 Reset_Handler
+     /tmp/cch6bb4i.s:365    .isr_vector:00000000 vector_table
+     /tmp/cch6bb4i.s:362    .isr_vector:00000000 $d
+     /tmp/cch6bb4i.s:369    .rodata.test_digit:00000000 $d
 
 UNDEFINED SYMBOLS
 predict
