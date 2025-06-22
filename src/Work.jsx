@@ -1,20 +1,27 @@
 import { GoogleGeminiEffect } from "./components/google-gemini";
-import { useScroll, useTransform } from "motion/react";
+import { useScroll, useTransform, motion } from "motion/react";
 import React from "react";
 
 export default function Work() {
   const ref = React.useRef(null);
+  const heroRef = React.useRef(null);
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start center", "end start"],
   });
+  
+  const { scrollYProgress: heroScrollProgress } = useScroll({
+    target: heroRef,
+    offset: ["start end", "end start"],
+  });
 
-  const pathLengthFirst = useTransform(scrollYProgress, [0, 0.6], [0.2, 1.2]);
-  const pathLengthSecond = useTransform(scrollYProgress, [0, 0.6], [0.15, 1.2]);
-  const pathLengthThird = useTransform(scrollYProgress, [0, 0.6], [0.1, 1.2]);
-  const pathLengthFourth = useTransform(scrollYProgress, [0, 0.6], [0.05, 1.2]);
-  const pathLengthFifth = useTransform(scrollYProgress, [0, 0.6], [0, 1.2]);
-  const iconOpacity = useTransform(scrollYProgress, [0, 0.05], [1, 0]);
+  const pathLengthFirst = useTransform(scrollYProgress, [0, 0.7], [0.2, 1.2]);
+  const pathLengthSecond = useTransform(scrollYProgress, [0, 0.7], [0.15, 1.2]);
+  const pathLengthThird = useTransform(scrollYProgress, [0, 0.7], [0.1, 1.2]);
+  const pathLengthFourth = useTransform(scrollYProgress, [0, 0.7], [0.05, 1.2]);
+  const pathLengthFifth = useTransform(scrollYProgress, [0, 0.7], [0, 1.2]);
+  const iconOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
+  const otherOpacity = useTransform(scrollYProgress, [0, 0.9], [0, 1]);
 
   return (
     <div className="w-full relative flex flex-col min-h-screen bg-[linear-gradient(180deg,_#101827_0%,_#0F1C4D_28%,_#1A2B6D_57%,_#22397E_84%,_#2A4690_100%)] text-white max-w-screen overflow-x-hidden">
@@ -27,7 +34,7 @@ export default function Work() {
           <img src="logo.svg" alt="logo" className="w-10 h-10" />
         </div>
 
-        <nav className="hidden md:flex items-center space-x-8  text-2xl">
+        <nav className="hidden md:flex items-center space-x-8 font-bold text-xl">
           <a href="#" className="hover:text-blue-400 transition-colors">
             Home
           </a>
@@ -42,18 +49,34 @@ export default function Work() {
 
       <main className="pt-24">
         {/* Hero Section */}
-        <section className="h-[calc(100vh-6rem)] flex items-center justify-center px-8 lg:px-16">
+        <section ref={heroRef} className="h-[calc(100vh-6rem)] flex items-center justify-center px-8 lg:px-16">
           <div className="flex flex-col md:flex-row items-center w-full">
             {/* Left Side: 3D Model Placeholder */}
             <div className="w-full md:w-1/2 flex justify-center mb-10 md:mb-0">
               <div className="w-96 h-96 relative">
                 {/* Placeholder for 3D Python logos */}
-                <div className="w-64 h-64 bg-gray-700/30 rounded-3xl absolute top-10 left-10 transform rotate-[-15deg] shadow-2xl flex items-center justify-center text-6xl backdrop-blur-sm border border-gray-600/50">
+                <motion.div 
+                  className="w-64 h-64 bg-gray-700/30 rounded-3xl absolute top-10 left-10 transform rotate-[-15deg] shadow-2xl flex items-center justify-center text-6xl backdrop-blur-sm border border-gray-600/50"
+                  style={{
+                    x: useTransform(heroScrollProgress, [0, 0.5], [0, -200]),
+                    y: useTransform(heroScrollProgress, [0, 0.5], [0, -50]),
+                    rotate: useTransform(heroScrollProgress, [0, 0.5], [-15, -25]),
+                    opacity: useTransform(heroScrollProgress, [0, 0.3], [1, 0.8]),
+                  }}
+                >
                   🐍
-                </div>
-                <div className="w-64 h-64 bg-gray-600/40 rounded-3xl absolute top-32 left-32 transform rotate-[10deg] shadow-2xl flex items-center justify-center text-6xl backdrop-blur-sm border border-gray-500/50">
+                </motion.div>
+                <motion.div 
+                  className="w-64 h-64 bg-gray-600/40 rounded-3xl absolute top-32 left-32 transform  shadow-2xl flex items-center justify-center text-6xl backdrop-blur-sm border border-gray-500/50"
+                  style={{
+                    x: useTransform(heroScrollProgress, [0, 0.5], [0, 100]),
+                    y: useTransform(heroScrollProgress, [0, 0.5], [0, -50]),
+                    rotate: useTransform(heroScrollProgress, [0, 0.5], [10, 25]),
+                    opacity: useTransform(heroScrollProgress, [0, 0.3], [1, 0.8]),
+                  }}
+                >
                   🐍
-                </div>
+                </motion.div>
               </div>
             </div>
 
@@ -105,6 +128,7 @@ export default function Work() {
               pathLengthFifth,
             ]}
             iconOpacity={iconOpacity}
+            otherOpacity={otherOpacity}
             className=""
           />
         </div>
