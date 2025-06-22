@@ -1,54 +1,66 @@
 #!/bin/bash
 # startup.sh - Start both Flask backend and React frontend
 
-echo "🚀 Starting DeepMetal Full Stack Application"
-echo "=============================================="
+echo "�� Starting DeepMetal MNIST Full-Stack Application"
+echo "=================================================="
 
-# Function to kill background processes on exit
+# Check if Python is available
+if ! command -v python3 &> /dev/null; then
+    echo "❌ Python3 is not installed or not in PATH"
+    exit 1
+fi
+
+# Check if Node.js is available
+if ! command -v node &> /dev/null; then
+    echo "❌ Node.js is not installed or not in PATH"
+    exit 1
+fi
+
+# Install Python dependencies
+echo "📦 Installing Python dependencies..."
+if [ -f "flask_mnist_requirements.txt" ]; then
+    pip install -r flask_mnist_requirements.txt
+else
+    echo "⚠️  flask_mnist_requirements.txt not found, using basic requirements"
+    pip install flask flask-cors torch torchvision pillow numpy
+fi
+
+# Install Node.js dependencies
+echo "📦 Installing Node.js dependencies..."
+npm install
+
+# Start the Flask backend in the background
+echo "🔧 Starting Flask backend..."
+python3 flask_mnist_backend.py &
+BACKEND_PID=$!
+
+# Wait a moment for backend to start
+sleep 3
+
+# Start the React frontend
+echo "🌐 Starting React frontend..."
+npm run dev &
+FRONTEND_PID=$!
+
+echo ""
+echo "✅ Both services are starting..."
+echo "📊 Backend: http://localhost:5000"
+echo "🌐 Frontend: http://localhost:5173"
+echo ""
+echo "Press Ctrl+C to stop both services"
+
+# Function to cleanup on exit
 cleanup() {
     echo ""
-    echo "🛑 Shutting down services..."
-    kill $FLASK_PID 2>/dev/null
-    kill $REACT_PID 2>/dev/null
+    echo "🛑 Stopping services..."
+    kill $BACKEND_PID 2>/dev/null
+    kill $FRONTEND_PID 2>/dev/null
     echo "✅ Services stopped"
     exit 0
 }
 
-# Set up signal handling
+# Set up signal handlers
 trap cleanup SIGINT SIGTERM
 
-# Check if Python and Node.js are available
-if ! command -v python3 &> /dev/null; then
-    echo "❌ Python3 is required but not installed"
-    exit 1
-fi
-
-if ! command -v npm &> /dev/null; then
-    echo "❌ Node.js/npm is required but not installed"
-    exit 1
-fi
-
-# Start Flask backend
-echo "🐍 Starting Flask backend on port 5000..."
-cd "$(dirname "$0")"
-python3 flask_backend.py &
-FLASK_PID=$!
-
-# Wait a moment for Flask to start
-sleep 3
-
-# Start React frontend
-echo "⚛️  Starting React frontend on port 5173..."
-cd frontend/react-app
-npm run dev &
-REACT_PID=$!
-
-echo ""
-echo "🎉 Services started successfully!"
-echo "Frontend: http://localhost:5173"
-echo "Backend:  http://localhost:5000"
-echo ""
-echo "Press Ctrl+C to stop all services"
-
-# Wait for services to be interrupted
+# Wait for both processes
 wait

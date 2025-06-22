@@ -2,7 +2,7 @@ import { GoogleGeminiEffect } from "./components/google-gemini";
 import { useScroll, useTransform } from "motion/react";
 import React from "react";
 
-export default function Work() {
+export default function Work({ onNavigateToUpload }) {
   const ref = React.useRef(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -37,6 +37,14 @@ export default function Work() {
           <a href="#" className="hover:text-blue-400 transition-colors">
             About
           </a>
+          {onNavigateToUpload && (
+            <button
+              onClick={onNavigateToUpload}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors duration-200 font-medium"
+            >
+              Try MNIST
+            </button>
+          )}
         </nav>
       </header>
 
@@ -67,6 +75,14 @@ export default function Work() {
                 integrated products, by creating a cheaper method to implement
                 your project.
               </p>
+              {onNavigateToUpload && (
+                <button
+                  onClick={onNavigateToUpload}
+                  className="mt-8 bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-lg transition-colors duration-200 font-medium text-lg"
+                >
+                  Try MNIST Recognition →
+                </button>
+              )}
             </div>
           </div>
         </section>
