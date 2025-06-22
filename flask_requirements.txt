@@ -1,7 +1,0 @@
-# Flask backend requirements for DeepMetal MNIST inference
-Flask==2.3.2
-Flask-Cors==4.0.0
-numpy==1.26.1
-Pillow==10.1.0
-torch==2.1.0
-werkzeug==2.3.7
