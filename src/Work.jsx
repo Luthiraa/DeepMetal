@@ -1,20 +1,27 @@
 import { GoogleGeminiEffect } from "./components/google-gemini";
-import { useScroll, useTransform } from "motion/react";
+import { useScroll, useTransform, motion } from "motion/react";
 import React from "react";
 
-export default function Work({ onNavigateToUpload }) {
+export default function Work({ onNavigateToUpload, onNavigateToApp }) {
   const ref = React.useRef(null);
+  const heroRef = React.useRef(null);
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start center", "end start"],
   });
+  
+  const { scrollYProgress: heroScrollProgress } = useScroll({
+    target: heroRef,
+    offset: ["start end", "end start"],
+  });
 
-  const pathLengthFirst = useTransform(scrollYProgress, [0, 0.6], [0.2, 1.2]);
-  const pathLengthSecond = useTransform(scrollYProgress, [0, 0.6], [0.15, 1.2]);
-  const pathLengthThird = useTransform(scrollYProgress, [0, 0.6], [0.1, 1.2]);
-  const pathLengthFourth = useTransform(scrollYProgress, [0, 0.6], [0.05, 1.2]);
-  const pathLengthFifth = useTransform(scrollYProgress, [0, 0.6], [0, 1.2]);
-  const iconOpacity = useTransform(scrollYProgress, [0, 0.05], [1, 0]);
+  const pathLengthFirst = useTransform(scrollYProgress, [0, 0.7], [0.2, 1.2]);
+  const pathLengthSecond = useTransform(scrollYProgress, [0, 0.7], [0.15, 1.2]);
+  const pathLengthThird = useTransform(scrollYProgress, [0, 0.7], [0.1, 1.2]);
+  const pathLengthFourth = useTransform(scrollYProgress, [0, 0.7], [0.05, 1.2]);
+  const pathLengthFifth = useTransform(scrollYProgress, [0, 0.7], [0, 1.2]);
+  const iconOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
+  const otherOpacity = useTransform(scrollYProgress, [0, 0.9], [0, 1]);
 
   return (
     <div className="w-full relative flex flex-col min-h-screen bg-[linear-gradient(180deg,_#101827_0%,_#0F1C4D_28%,_#1A2B6D_57%,_#22397E_84%,_#2A4690_100%)] text-white max-w-screen overflow-x-hidden">
@@ -27,16 +34,24 @@ export default function Work({ onNavigateToUpload }) {
           <img src="logo.svg" alt="logo" className="w-10 h-10" />
         </div>
 
-        <nav className="hidden md:flex items-center space-x-8  text-2xl">
+        <nav className="hidden md:flex items-center space-x-8 font-bold text-xl">
           <a href="#" className="hover:text-blue-400 transition-colors">
             Home
           </a>
-          <a href="#" className="hover:text-blue-400 transition-colors">
+          {/* <a href="#" className="hover:text-blue-400 transition-colors">
             Our Mission
           </a>
           <a href="#" className="hover:text-blue-400 transition-colors">
             About
-          </a>
+          </a> */}
+          {onNavigateToApp && (
+            <button
+              onClick={onNavigateToApp}
+              className="hover:text-blue-400 transition-colors"
+            >
+              Dashboard
+            </button>
+          )}
           {onNavigateToUpload && (
             <button
               onClick={onNavigateToUpload}
@@ -50,18 +65,34 @@ export default function Work({ onNavigateToUpload }) {
 
       <main className="pt-24">
         {/* Hero Section */}
-        <section className="h-[calc(100vh-6rem)] flex items-center justify-center px-8 lg:px-16">
+        <section ref={heroRef} className="h-[calc(100vh-6rem)] flex items-center justify-center px-8 lg:px-16">
           <div className="flex flex-col md:flex-row items-center w-full">
             {/* Left Side: 3D Model Placeholder */}
             <div className="w-full md:w-1/2 flex justify-center mb-10 md:mb-0">
               <div className="w-96 h-96 relative">
                 {/* Placeholder for 3D Python logos */}
-                <div className="w-64 h-64 bg-gray-700/30 rounded-3xl absolute top-10 left-10 transform rotate-[-15deg] shadow-2xl flex items-center justify-center text-6xl backdrop-blur-sm border border-gray-600/50">
+                <motion.div 
+                  className="w-64 h-64 bg-gray-700/30 rounded-3xl absolute top-10 left-10 transform rotate-[-15deg] shadow-2xl flex items-center justify-center text-6xl backdrop-blur-sm border border-gray-600/50"
+                  style={{
+                    x: useTransform(heroScrollProgress, [0, 0.5], [0, 0]),
+                    y: useTransform(heroScrollProgress, [0, 0.5], [0, -50]),
+                    rotate: useTransform(heroScrollProgress, [0, 0.5], [-15, -25]),
+                    opacity: useTransform(heroScrollProgress, [0, 0.3], [1, 0.8]),
+                  }}
+                >
                   🐍
-                </div>
-                <div className="w-64 h-64 bg-gray-600/40 rounded-3xl absolute top-32 left-32 transform rotate-[10deg] shadow-2xl flex items-center justify-center text-6xl backdrop-blur-sm border border-gray-500/50">
-                  🐍
-                </div>
+                </motion.div>
+                <motion.div 
+                  className="w-64 h-72 bg-gray-600/40 rounded-3xl absolute top-32 left-32 transform  shadow-2xl flex items-center justify-center text-6xl backdrop-blur-sm border border-gray-500/50"
+                  style={{
+                    x: useTransform(heroScrollProgress, [0, 0.5], [0, 100]),
+                    y: useTransform(heroScrollProgress, [0, 0.5], [0, -50]),
+                    rotate: useTransform(heroScrollProgress, [0, 0.5], [10, 25]),
+                    opacity: useTransform(heroScrollProgress, [0, 0.3], [1, 0.8]),
+                  }}
+                >
+                  <img className="w-32 j-32" src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/C_Programming_Language.svg/926px-C_Programming_Language.svg.png" alt="python" />
+                </motion.div>
               </div>
             </div>
 
@@ -89,10 +120,55 @@ export default function Work({ onNavigateToUpload }) {
 
         {/* Features Section */}
         <section className="py-24 px-8 lg:px-16">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-white mb-6">Key Features</h2>
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+              Transform your Python machine learning projects into optimized STM32 applications with our advanced conversion technology.
+            </p>
+          </div>
+          
           <div className="flex flex-wrap justify-center gap-8">
-            <div className="w-80 h-64 bg-gray-800/20 rounded-2xl backdrop-blur-sm border border-gray-700/50"></div>
-            <div className="w-80 h-64 bg-gray-800/20 rounded-2xl backdrop-blur-sm border border-gray-700/50"></div>
-            <div className="w-80 h-64 bg-gray-800/20 rounded-2xl backdrop-blur-sm border border-gray-700/50"></div>
+            {/* Feature 1: Code Conversion */}
+            <div className="w-80 h-80 bg-gray-800/20 rounded-2xl backdrop-blur-sm border border-gray-700/50 p-8 flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mb-6">
+                <svg className="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-4">Code Conversion</h3>
+              <p className="text-gray-300 text-sm leading-relaxed">
+                Seamlessly convert Python ML libraries to optimized C code for STM32 microcontrollers. 
+                Support for popular frameworks like TensorFlow, PyTorch, and scikit-learn.
+              </p>
+            </div>
+
+            {/* Feature 2: Streamlined Implementation */}
+            <div className="w-80 h-80 bg-gray-800/20 rounded-2xl backdrop-blur-sm border border-gray-700/50 p-8 flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mb-6">
+                <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-4">Streamlined Process</h3>
+              <p className="text-gray-300 text-sm leading-relaxed">
+                Simplify your development workflow with automated code generation, 
+                memory optimization, and one-click deployment to STM32 devices.
+              </p>
+            </div>
+
+            {/* Feature 3: Increased Performance */}
+            <div className="w-80 h-80 bg-gray-800/20 rounded-2xl backdrop-blur-sm border border-gray-700/50 p-8 flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center mb-6">
+                <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-4">Increased Performance</h3>
+              <p className="text-gray-300 text-sm leading-relaxed">
+                Achieve up to 10x faster inference times with our optimized C implementations. 
+                Reduced memory footprint and improved power efficiency for edge devices.
+              </p>
+            </div>
           </div>
         </section>
 
@@ -121,6 +197,7 @@ export default function Work({ onNavigateToUpload }) {
               pathLengthFifth,
             ]}
             iconOpacity={iconOpacity}
+            otherOpacity={otherOpacity}
             className=""
           />
         </div>

@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { motion } from 'motion/react';
 import { Copy } from 'lucide-react';
 
-const ImageUpload = () => {
+const ImageUpload = ({ onNavigateToWork, onNavigateToApp }) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -108,28 +108,36 @@ const ImageUpload = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen bg-gray-900 text-white overflow--scroll">
       {/* Header */}
-      <header className="bg-gray-800/50 backdrop-blur-sm border-b border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">P</span>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                  Py2STM
-                </h1>
-                <p className="text-xs text-gray-400">MNIST Digit Recognition</p>
-              </div>
-            </div>
-          </div>
+      <header className=" fixed top-0 left-0 w-full z-50 bg-[#0a101f]/50 backdrop-blur-sm py-8 px-8 lg:px-16 flex justify-between items-center">
+        <div className="flex-row items-center justify-center flex space-x-4">
+          <div className="text-4xl font-bold">Py2STM</div>
+          <img src="logo.svg" alt="logo" className="w-10 h-10" />
         </div>
+
+        <nav className="hidden md:flex items-center space-x-8 font-bold text-xl">
+          {onNavigateToWork && (
+            <button
+              onClick={onNavigateToWork}
+              className="hover:text-blue-400 transition-colors"
+            >
+              Home
+            </button>
+          )}
+          {onNavigateToApp && (
+            <button
+              onClick={onNavigateToApp}
+              className="hover:text-blue-400 transition-colors"
+            >
+              Dashboard
+            </button>
+          )}
+        </nav>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="pt-40 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-gray-100 mb-4">
             MNIST Digit Recognition

@@ -15,22 +15,12 @@ class DynamicPyToCConverter:
 
     def parse_model_architecture(self):
         """extracts layer configurations from pytorch model"""
-        # handle pytorch 2.6+ weights_only parameter with safe globals
+        # handle pytorch 2.6+ weights_only parameter
         try:
-            # First try with weights_only=False (for older PyTorch compatibility)
             model = torch.load(self.model_path, map_location='cpu', weights_only=False)
-        except Exception as e:
-            print(f"Failed to load with weights_only=False: {e}")
-            try:
-                # Try with weights_only=True and safe globals for PyTorch 2.7+
-                import torch.serialization
-                torch.serialization.add_safe_globals([torch.nn.modules.container.Sequential])
-                model = torch.load(self.model_path, map_location='cpu', weights_only=True)
-            except Exception as e2:
-                print(f"Failed to load with weights_only=True: {e2}")
-                # Final fallback for older pytorch versions
-                model = torch.load(self.model_path, map_location='cpu')
-        
+        except TypeError:
+            # fallback for older pytorch versions
+            model = torch.load(self.model_path, map_location='cpu')
         model.eval()
         
         layer_idx = 0

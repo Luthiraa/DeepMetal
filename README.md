@@ -1,256 +1,329 @@
-# DeepMetal MNIST Full-Stack Application
+# PyTorch to C/C++/LLVM Conversion Workflow
 
-A complete full-stack application that converts PyTorch MNIST models to optimized STM32 C code and runs them on embedded hardware.
+Complete pipeline for converting PyTorch neural networks to optimized C, C++, and LLVM code for deployment on embedded systems.
 
-## 🚀 Features
-
-- **React Frontend**: Modern UI with drag-and-drop image upload
-- **Flask Backend**: PyTorch model inference and C code generation
-- **Model Export**: Automatic PyTorch model loading and conversion
-- **STM32 Code Generation**: Complete C code ready for STM32F446RE
-- **Real-time Processing**: Upload MNIST images and get instant predictions
-- **Code Preview**: View generated STM32 code with syntax highlighting
-- **Copy to Clipboard**: Easy code copying for development
-
-## 🏗️ Architecture
-
-```
-Frontend (React) ←→ Backend (Flask) ←→ PyTorch Models ←→ STM32 Converter
-     ↓                    ↓                    ↓                    ↓
-Image Upload      Model Inference      Neural Network      C Code Generation
-     ↓                    ↓                    ↓                    ↓
-Drag & Drop       Real-time Results    MNIST Recognition   STM32F446RE Code
-```
-
-## 📦 Installation
-
-### Prerequisites
-
-- Python 3.8+
-- Node.js 16+
-- ARM GCC (optional, for compilation)
-
-### Quick Start
-
-1. **Clone the repository**:
-   ```bash
-   git clone <repository-url>
-   cd DeepMetal-1
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   # Install Python dependencies
-   pip install -r flask_mnist_requirements.txt
-   
-   # Install Node.js dependencies
-   npm install
-   ```
-
-3. **Start the application**:
-   ```bash
-   # Use the startup script (recommended)
-   ./startup.sh
-   
-   # Or start manually:
-   # Terminal 1: python3 flask_mnist_backend.py
-   # Terminal 2: npm run dev
-   ```
-
-4. **Access the application**:
-   - Frontend: http://localhost:5173
-   - Backend: http://localhost:5000
-
-## 🔧 Backend Features
-
-### Model Management
-- **Automatic Model Loading**: Loads existing PyTorch models from `backend/src/models/`
-- **Model Creation**: Creates new models if none exist using `export_model.py`
-- **Multiple Architectures**: Supports linear, convolutional, and hybrid models
-- **Fallback Models**: Provides simple models if converter is unavailable
-
-### Image Processing
-- **MNIST Preprocessing**: Converts uploaded images to 28×28 grayscale format
-- **Normalization**: Applies proper MNIST normalization (0-1 range)
-- **Real-time Inference**: Runs PyTorch model inference on uploaded images
-- **Confidence Scoring**: Provides prediction confidence scores
-
-### C Code Generation
-- **Dynamic Converter**: Uses `converter.py` for PyTorch-to-C conversion
-- **STM32 Integration**: Generates complete STM32F446RE code
-- **LED Feedback**: Code includes LED blinking for digit display
-- **Fallback Generation**: Simple C code if converter fails
-
-### API Endpoints
-
-- `GET /api/health` - Health check and service status
-- `GET /api/model-info` - Model architecture and parameters
-- `POST /api/process-mnist` - Process uploaded MNIST image
-
-## 🌐 Frontend Features
-
-### Image Upload
-- **Drag & Drop**: Intuitive file upload interface
-- **File Validation**: Supports PNG, JPG, JPEG, GIF, BMP
-- **Image Preview**: Shows uploaded image before processing
-- **Size Limits**: 16MB maximum file size
-
-### Results Display
-- **Prediction Results**: Shows predicted digit and confidence
-- **Processing Time**: Displays inference time
-- **Model Information**: Shows model type and architecture
-- **Real-time Updates**: Live status updates during processing
-
-### Code Preview
-- **Syntax Highlighting**: C code with proper formatting
-- **Copy to Clipboard**: One-click code copying
-- **Complete Code**: Full STM32 project ready for compilation
-- **Download Option**: Save generated code to file
-
-## 🎯 Usage
-
-### 1. Upload an Image
-- Drag and drop a 28×28 MNIST-style image
-- Or click to browse and select a file
-- Supported formats: PNG, JPG, JPEG, GIF, BMP
-
-### 2. View Results
-- See the predicted digit (0-9)
-- Check confidence score
-- Review processing time
-- Examine model information
-
-### 3. Generate STM32 Code
-- View the complete C code
-- Copy code to clipboard
-- Code includes:
-  - Neural network implementation
-  - STM32F446RE setup
-  - LED control for digit display
-  - Main program loop
-
-### 4. Deploy to STM32
-- Compile with ARM GCC
-- Flash to STM32F446RE Nucleo board
-- LED will blink the predicted digit
-
-## 🔍 Testing
-
-Run the test script to verify functionality:
+## Quick Start
 
 ```bash
-python3 test_mnist_backend.py
+# 1. create and train a model
+python export_model.py --model-type hybrid --epochs 5
+
+# 2. test all converters
+./test_conversion.sh
+
+# 3. validate entire workflow
+python test_complete_workflow.py
 ```
 
-Tests include:
-- Health check endpoint
-- Model information retrieval
-- Image processing with test data
-- C code generation verification
+## Components
 
-## 📁 Project Structure
+### 1. Model Export (`export_model.py`)
+Creates PyTorch models compatible with the conversion pipeline.
 
-```
-DeepMetal-1/
-├── flask_mnist_backend.py          # Main Flask backend
-├── flask_mnist_requirements.txt    # Python dependencies
-├── test_mnist_backend.py          # Backend test script
-├── startup.sh                     # Application startup script
-├── src/                           # React frontend
-│   ├── components/
-│   │   ├── ImageUpload.jsx        # Image upload component
-│   │   └── AppRouter.jsx          # Simple router
-│   └── App.jsx                    # Main app component
-├── backend/                       # Backend resources
-│   └── src/
-│       ├── converter.py           # PyTorch-to-C converter
-│       ├── export_model.py        # Model creation utilities
-│       └── models/                # Pre-trained models
-└── temp_uploads/                  # Temporary file storage
+**Supported architectures:**
+- `linear`: Fully connected layers only (784→128→64→10)
+- `conv`: Convolutional layers + linear classifier
+- `hybrid`: Mixed conv + linear layers (recommended)
+
+**Usage:**
+```bash
+# train a hybrid model for 5 epochs
+python export_model.py --model-type hybrid --epochs 5 --batch-size 64
+
+# create model without training (for testing)
+python export_model.py --model-type linear --no-train
+
+# train on gpu if available
+python export_model.py --model-type conv --device cuda --epochs 10
 ```
 
-## 🛠️ Development
+**Output:**
+- `models/mnist_hybrid_model.pth` - Complete model
+- `models/mnist_hybrid_model_state_dict.pth` - State dict only
+- `test_conversion.sh` - Script to test all converters
 
-### Adding New Models
-1. Place PyTorch models in `backend/src/models/`
-2. Models should be compatible with `converter.py`
-3. Supported formats: `.pth` files
+### 2. Dynamic C Converter (`converter.py`)
+Generates pure C code optimized for ARM Cortex-M4 microcontrollers.
 
-### Customizing C Code Generation
-- Modify `generate_c_code_with_converter()` in `flask_mnist_backend.py`
-- Update STM32 setup in generated code
-- Add custom LED patterns or UART output
+**Features:**
+- Static memory allocation
+- Ping-pong buffer optimization
+- ARM Cortex-M4 compilation
+- Minimal dependencies
 
-### Frontend Customization
-- Edit `src/components/ImageUpload.jsx` for UI changes
-- Modify `src/App.jsx` for layout updates
-- Update styling in `src/App.css`
+**Usage:**
+```bash
+python converter.py models/mnist_hybrid_model.pth
+```
 
-## 🐛 Troubleshooting
+**Output:**
+```
+output/
+├── model.h          # header with declarations
+├── model.c          # implementation
+└── model.o          # compiled ARM object file
+```
+
+**Generated API:**
+```c
+int predict(const float *input, int input_h, int input_w, int input_ch);
+```
+
+### 3. LLVM IR Converter (`llvm.py`)
+Generates LLVM intermediate representation with advanced optimizations.
+
+**Features:**
+- Cross-platform target support
+- Advanced optimization passes
+- Loop unrolling and vectorization
+- Multiple architecture support
+
+**Usage:**
+```bash
+python llvm.py models/mnist_hybrid_model.pth
+```
+
+**Output:**
+```
+output/
+├── model.ll         # llvm ir code
+└── model_llvm.o     # optimized object file
+```
+
+### 4. C++ Template Converter (`pytoc.py`)
+Generates modern C++ code with STL containers and type safety.
+
+**Features:**
+- Template-based architecture
+- STL containers for safety
+- Easy debugging and modification
+- JSON configuration export
+
+**Usage:**
+```bash
+python pytoc.py models/mnist_hybrid_model.pth
+```
+
+**Output:**
+```
+output/
+├── dynamic_model.cpp     # complete c++ implementation
+├── dynamic_model         # compiled executable
+└── model_config.json     # architecture metadata
+```
+
+## Supported Layer Types
+
+### Linear Layers (`torch.nn.Linear`)
+```python
+nn.Linear(in_features, out_features, bias=True)
+```
+- Fully connected transformation
+- Optional bias terms
+- Efficient matrix multiplication
+
+### Convolutional Layers (`torch.nn.Conv2d`)
+```python
+nn.Conv2d(in_channels, out_channels, kernel_size, stride=1, padding=0)
+```
+- 2D convolution with configurable parameters
+- Stride and padding support
+- Boundary condition handling
+
+### ReLU Activation (`torch.nn.ReLU`)
+```python
+nn.ReLU()
+```
+- Element-wise max(0, x) operation
+- Hardware-optimized implementation
+
+## Memory Layout and Optimization
+
+### Data Organization
+```c
+// weights stored as [output_neurons][input_features]
+const float w0[128][784] = {...};
+
+// ping-pong buffers for layer outputs
+float buf1[MAX_BUFFER_SIZE], buf2[MAX_BUFFER_SIZE];
+```
+
+### Convolution Memory Access
+```c
+// input indexed as [channel][height][width]
+int input_idx = ic * input_h * input_w + ih * input_w + iw;
+
+// output organized as [channel][height][width] 
+int output_idx = oc * out_h * out_w + oh * out_w + ow;
+```
+
+### Buffer Management
+- **Ping-pong buffers**: Alternate between `buf1` and `buf2` for each layer
+- **Static allocation**: No dynamic memory allocation for embedded safety
+- **Size optimization**: Reuse buffers across layers
+
+## Target Platform Configuration
+
+### ARM Cortex-M4 (Default)
+```bash
+clang --target=armv7em-none-eabi \
+      -mcpu=cortex-m4 \
+      -mthumb \
+      -mfloat-abi=hard \
+      -mfpu=fpv4-sp-d16 \
+      -O3
+```
+
+### Custom Targets
+Modify compiler flags in each converter for different targets:
+- **x86**: `--target=x86_64-linux-gnu`
+- **ARM64**: `--target=aarch64-linux-gnu`  
+- **RISC-V**: `--target=riscv32-unknown-elf`
+
+## Performance Characteristics
+
+### Model Size vs. Accuracy Trade-offs
+```
+Linear (784→128→64→10):  ~107K parameters, ~95% accuracy
+Conv (1×3×3→16×3×3→32): ~23K parameters, ~98% accuracy  
+Hybrid (optimized):      ~15K parameters, ~97% accuracy
+```
+
+### Memory Requirements
+```
+Flash (weights):  15KB - 400KB depending on architecture
+RAM (buffers):    2KB - 64KB for intermediate computations
+Stack:           <1KB for local variables
+```
+
+### Inference Speed (Cortex-M4 @ 80MHz)
+```
+Linear model:    ~2ms per inference
+Conv model:      ~8ms per inference
+Hybrid model:    ~5ms per inference
+```
+
+## Advanced Usage
+
+### Custom Model Architecture
+```python
+# create your own sequential model
+custom_model = nn.Sequential(
+    nn.Conv2d(1, 16, 3, padding=1),
+    nn.ReLU(),
+    nn.Conv2d(16, 32, 3, stride=2),
+    nn.ReLU(),
+    nn.Flatten(),
+    nn.Linear(32 * 14 * 14, 64),
+    nn.ReLU(),
+    nn.Linear(64, 10)
+)
+
+# export for conversion
+torch.save(custom_model, 'custom_model.pth')
+```
+
+### Integration with Embedded Systems
+```c
+// example main.c for microcontroller
+#include "model.h"
+#include <stdio.h>
+
+float sensor_data[784];  // input from sensors
+
+int main() {
+    // collect sensor data
+    read_sensors(sensor_data);
+    
+    // run inference  
+    int prediction = predict(sensor_data, 28, 28, 1);
+    
+    // act on prediction
+    handle_prediction(prediction);
+    
+    return 0;
+}
+```
+
+### Debugging and Validation
+```bash
+# validate complete workflow
+python test_complete_workflow.py
+
+# compare outputs between pytorch and c
+python validate_conversion.py model.pth
+
+# profile performance
+python benchmark_inference.py model.pth
+```
+
+## Troubleshooting
 
 ### Common Issues
 
-1. **Model Loading Failed**
-   - Check if models exist in `backend/src/models/`
-   - Verify PyTorch installation
-   - Check model file permissions
+**1. Unsupported layer types**
+```
+Error: Layer type 'BatchNorm2d' not supported
+```
+*Solution*: Remove or replace unsupported layers. Currently supported: Linear, Conv2d, ReLU.
 
-2. **Converter Import Error**
-   - Ensure `converter.py` is in `backend/src/`
-   - Check Python path configuration
-   - Fallback code will be generated
+**2. Memory buffer overflow**
+```
+Error: Layer output size exceeds buffer capacity
+```
+*Solution*: Increase `MAX_BUFFER_SIZE` in converter or reduce model size.
 
-3. **Image Processing Errors**
-   - Verify image format is supported
-   - Check image dimensions (will be resized to 28×28)
-   - Ensure proper file permissions
+**3. LLVM compilation failures**
+```
+Error: llvmlite not installed
+```
+*Solution*: `pip install llvmlite` or use C/C++ converters instead.
 
-4. **Frontend Connection Issues**
-   - Verify backend is running on port 5000
-   - Check CORS configuration
-   - Ensure no firewall blocking
+**4. ARM toolchain missing**
+```
+Error: clang: command not found
+```
+*Solution*: Install ARM GCC toolchain or use x86 targets for testing.
 
-### Debug Mode
+### Model Architecture Guidelines
 
-Enable debug logging:
+**For embedded deployment:**
+- Keep total parameters under 100K
+- Avoid large convolutional layers
+- Use stride > 1 to reduce spatial dimensions quickly
+- Prefer ReLU over other activations
 
+**For best converter compatibility:**
+- Use `nn.Sequential` models
+- Avoid custom layers or complex control flow
+- Keep all operations differentiable
+- Save complete models, not just state dicts
+
+## Dependencies
+
+**Python packages:**
 ```bash
-# Backend debug
-export FLASK_DEBUG=1
-python3 flask_mnist_backend.py
-
-# Frontend debug
-npm run dev -- --debug
+pip install torch torchvision numpy llvmlite
 ```
 
-## 📊 Performance
+**System tools:**
+```bash
+# ubuntu/debian
+sudo apt install clang gcc-arm-none-eabi
 
-- **Inference Time**: ~10-50ms per image
-- **Model Size**: 1KB - 100KB depending on architecture
-- **Memory Usage**: ~50MB for backend, ~100MB for frontend
-- **Code Generation**: ~1-5 seconds for complex models
+# macos
+brew install llvm arm-none-eabi-gcc
 
-## 🔮 Future Enhancements
+# or use conda
+conda install pytorch torchvision llvmlite
+```
 
-- [ ] Support for other datasets (CIFAR-10, Fashion-MNIST)
-- [ ] Real-time camera input
-- [ ] Model training interface
-- [ ] Advanced STM32 configurations
-- [ ] WebSocket for real-time updates
-- [ ] Model quantization for smaller code size
+## Next Steps
 
-## 📄 License
+1. **Create your model**: `python export_model.py --model-type hybrid`
+2. **Test conversion**: `./test_conversion.sh`
+3. **Integrate with firmware**: Use generated `.o` files in your embedded project
+4. **Optimize further**: Profile and adjust model architecture for your constraints
+5. **Deploy**: Flash to target hardware and validate real-world performance
 
-This project is part of the DeepMetal (Py2STM) framework for converting PyTorch models to STM32 code.
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
----
-
-**DeepMetal MNIST** - From PyTorch to STM32 in minutes! 🚀
+For more advanced use cases, see the individual converter documentation and consider extending the layer support for your specific requirements.

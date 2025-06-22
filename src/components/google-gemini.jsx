@@ -14,18 +14,19 @@ export const GoogleGeminiEffect = ({
   description,
   className,
   iconOpacity = 1,
+  otherOpacity = 0,
 }) => {
   const iconPositions = [
     [100, "https://imgs.search.brave.com/sv3Rby54dx8w72WilWm79wZ6Uv65nh-ZCVbYsej4-g0/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWFn/ZXMuc2Vla2xvZ28u/Y29tL2xvZ28tcG5n/LzQzLzIvdGVuc29y/Zmxvdy1sb2dvLXBu/Z19zZWVrbG9nby00/MzUxMjQucG5n"], 
-    [200, "https://imgs.search.brave.com/sv3Rby54dx8w72WilWm79wZ6Uv65nh-ZCVbYsej4-g0/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWFn/ZXMuc2Vla2xvZ28u/Y29tL2xvZ28tcG5n/LzQzLzIvdGVuc29y/Zmxvdy1sb2dvLXBu/Z19zZWVrbG9nby00/MzUxMjQucG5n"], 
-    [300, "https://imgs.search.brave.com/lJIuDCRwCv9fagyLYNUrKTpXWEAPk5eXuDP4INyW5Z0/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWFn/ZXMuc2Vla2xvZ28u/Y29tL2xvZ28tcG5n/LzUwLzIvcHl0b3Jj/aC1sb2dvLXBuZ19z/ZWVrbG9nby01MDMy/NjcucG5n"], 
+    [200, "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Scikit_learn_logo_small.svg/1200px-Scikit_learn_logo_small.svg.png"], 
+    [300, "https://static-00.iconduck.com/assets.00/pytorch-icon-1694x2048-jgwjy3ne.png"], 
     [400, "https://studyopedia.com/wp-content/uploads/2023/07/scipy.png"], 
-    [500], 
-    [940], 
-    [1040], 
-    [1140], 
-    [1240], 
-    [1340]
+    [500, "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Created_with_Matplotlib-logo.svg/2048px-Created_with_Matplotlib-logo.svg.png"], 
+    [940, "https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Theano_logo.svg/1280px-Theano_logo.svg.png"], 
+    [1040, "https://cdn.worldvectorlogo.com/logos/seaborn-1.svg"], 
+    [1140, "https://img.icons8.com/color/512/pandas.png"], 
+    [1240, "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/NumPy_logo_2020.svg/2560px-NumPy_logo_2020.svg.png"], 
+    [1340, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQOHx6oZAsXTmwSqwm8Sehgd8eT6gThlzACSA&s"]
   ];
   return (
     <div className={cn("relative", className)}>
@@ -39,7 +40,7 @@ export const GoogleGeminiEffect = ({
           `Convert Python code to STM32 microcontroller applications with ease!`}
       </p> */}
       <div
-        className="w-full h-[1200px] flex items-center justify-center bg-transparent relative">
+        className="w-full h-[1900px] -mt-40 flex items-center justify-center bg-transparent relative">
         {/* <button
           className="font-bold bg-blue-500 hover:bg-blue-600 rounded-full md:px-4 md:py-2 px-2 py-1 md:mt-24 mt-8 z-30 md:text-base text-white text-xs  w-fit mx-auto transition-colors duration-200">
           Get Started
@@ -47,7 +48,7 @@ export const GoogleGeminiEffect = ({
       </div>
       <svg
         width="1440"
-        height="1200"
+        height="1900"
         viewBox="0 0 1440 1200"
         xmlns="http://www.w3.org/2000/svg"
         className="absolute top-0 left-0 w-full h-full overflow-visible">
@@ -66,6 +67,17 @@ export const GoogleGeminiEffect = ({
             className="-z-5"
           />
         ))}
+        
+        {/* Image at the end of the funnel where all lines converge */}
+        <motion.image
+          href="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/C_Programming_Language.svg/926px-C_Programming_Language.svg.png"
+          x={720 - 100}
+          y={1250}
+          width="200"
+          height="200"
+          style={{ opacity: otherOpacity }}
+          className="-z-5"
+        />
         
         <motion.path
           d="M100 0C100 150 200 250 300 350C400 450 500 550 600 650C650 750 700 850 720 950C720 1050 720 1150 720 1200"
