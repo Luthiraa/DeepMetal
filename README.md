@@ -1,4 +1,31 @@
-# PyTorch to C/C++/LLVM Conversion Workflow
+# DEEPMETAL
+
+*Transforming AI into Seamless Embedded Powerhouse*
+
+![Last Commit](https://img.shields.io/badge/last%20commit-last%20sunday-6f42c1)
+![LLVM](https://img.shields.io/badge/llvm-32.0%25-blue)
+![Languages](https://img.shields.io/badge/languages-9-blue)
+
+---
+
+### *Built with the tools and technologies:*
+
+![JSON](https://img.shields.io/badge/-JSON-black?logo=json)
+![Markdown](https://img.shields.io/badge/-Markdown-000000?logo=markdown)
+![npm](https://img.shields.io/badge/-npm-CB3837?logo=npm)
+![Dart](https://img.shields.io/badge/-Dart-0175C2?logo=dart)
+![JavaScript](https://img.shields.io/badge/-JavaScript-F7DF1E?logo=javascript)
+![SymPy](https://img.shields.io/badge/-SymPy-8bc34a?logo=sympy)
+![GNU Bash](https://img.shields.io/badge/-GNU%20Bash-4EAA25?logo=gnubash)
+![React](https://img.shields.io/badge/-React-61DAFB?logo=react)
+
+![NumPy](https://img.shields.io/badge/-NumPy-013243?logo=numpy)
+![C++](https://img.shields.io/badge/-C++-00599C?logo=cplusplus)
+![Python](https://img.shields.io/badge/-Python-3776AB?logo=python)
+![C](https://img.shields.io/badge/-C-A8B9CC?logo=c)
+![ONNX](https://img.shields.io/badge/-ONNX-005CED?logo=onnx)
+![Vite](https://img.shields.io/badge/-Vite-646CFF?logo=vite)
+![ESLint](https://img.shields.io/badge/-ESLint-4B32C3?logo=eslint)
 
 Complete pipeline for converting PyTorch neural networks to optimized C, C++, and LLVM code for deployment on embedded systems.
 
