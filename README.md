@@ -14,7 +14,7 @@
 ![SymPy](https://img.shields.io/badge/-SymPy-8bc34a?logo=sympy)
 ![GNU Bash](https://img.shields.io/badge/-GNU%20Bash-4EAA25?logo=gnubash)
 ![React](https://img.shields.io/badge/-React-61DAFB?logo=react)
-
+![Torch](https://img.shields.io/badge/-Torch-ee4c2c?logo=pytorch)
 ![NumPy](https://img.shields.io/badge/-NumPy-013243?logo=numpy)
 ![C++](https://img.shields.io/badge/-C++-00599C?logo=cplusplus)
 ![Python](https://img.shields.io/badge/-Python-3776AB?logo=python)
