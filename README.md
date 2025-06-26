@@ -1,6 +1,7 @@
 # DEEPMETAL
 
 *Transforming AI into Seamless Embedded Powerhouse*
+*Compiler for high-level ML libraries to run your models on edge*
 
 ![Last Commit](https://img.shields.io/badge/last%20commit-last%20sunday-6f42c1)
 ![LLVM](https://img.shields.io/badge/llvm-32.0%25-blue)
